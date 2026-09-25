@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<!-- Gerenciador de Viagens | v1.0 | 25/09/2026 | última alteração: versão inicial -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Gerenciador de Viagens</title>
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAAFMUlEQVR4nO3d0XUTMRBG4QknHaSJJK0kJfBGFVRAFbxRArVw6CY8BJ3Yjr279mqkmX/uVwDR7twVwjbO3cPTy5sBIr7MXgDQE0FDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFjs79/fs9ewqr72QtAbBkiPkTQOLIU8OPz68CV3IagkW4XXkLQRSlFfIigi9gbcIbjhhlBS1PdhZfwsp2oijGbEbSkqjGbEbQcj5iznJ/NCFpK5Z25IWgRxPyOoAV4xpzpuGE2MWh2lD64j8emvA7dhnA4jGw7QQTE/Nndw9PL28gfuGUIxL1uRMwZ5zB0h946BHbuZezMlw0L+tYhEPcxYl42JOheQ6geNzGvcz9DjxqCeuCjY856P1136JFDUN692Zm3c9uhowwhe9wz7mPme+YSdJSYT2UbFDFfr3vQUWM+FX1wxHwb+SPHFtEGScy3k3mVo5fZgyXmfYa99Z0tbLPxgybm/UJ+liMi78ETcx/Dg26yhm3WPwRi7mda0E3msJs9cRBzX9ODbhTCNrsuFmLuL0zQZjpRN0vxELOPUEE3amGbHcdEzH5CBt0ohj1DlZjNggfdEPbtKsVsliTohrCvUy1ms2RBN4S9rmLMZkmDbgj7vKoxmyUPuiHsD5VjNhMJuqkedvWYzcSCbiqGTczvJINuqoRNzB+kg26UwybmYyWCbtTCJubPSgXdKIRNzOeV/MLz7DFkX7+nkjv0oWy7NTEvKx90kyFsYl5X8shxzuPzK8EIYIe+IOqOzUO3jB36AnbsnAh6BWHnQtAbRDp+RFpLRAS9goByIegFxJwPQV8QOebIa5uNoM8gmLwI+gQx50bQBzLFnGmtIxH0fwSigaCNmJWUDzpzzJnX7qV00AShp2zQxKypZNDErKtc0Goxq13PXqWC5pvz9ZUJmphrKBH07JgVf2lnVPJBz44ZY0kHHSlmIh9DNuhIMY/AsePd0KBH3fSoMbNL+7sf9YNaZGux7R161JgxxpAvmukV2Vo4WWL2XGf1h8t9h+45vGjnxOrxROR6ho4WYE97YuZB8OMWNDHPoXzft3AJWvmm9oo58kORWfegiRkzub3KoRa2V8xe96nqw+d2hlb61k6V66jA/Z3C7GF7rz3zvYlo2FvfGQeXcc2N2pFvq6Gf5ci0W49cZ5Z7ksGUT9tFDzvy2rAsxC8NivTXo9pHQKs9nCE+Dx1lx46wBuwTIuhmZtgRYo6whuxCBd2MDls5pEjHuRFCBt0oh3ZJxWvuKXTQZnHO18ghfNBNpbB7X2elY0eaoBuPsCMOvMrD21u6oBsGjnPSBl0BD+31UgfNwLeLeKzykDroCnhor5M+aAaOQ+mDrqDXQ1vh2CERNLs0Gomge4i+e/HQbiMTNAPfJvqDu5dM0BXw0K6TCpqBQyroCno8tMrHDrmg2aVrkwvaTD9q9evbY8j/+v7646f3j0ASv75/c/3zXYMmZFziFbbkkQN1uQXN7owlXn2wQ0MKQUOKW9De/5pFbvyjENiA16ExVOrXoaM5/QyD2jtu6te3Rdkjh/qw1a/vklJBtyGrDlv9+rYodeSAvlI7NPQRNKQQNKQQNKQQNKQQNKQQNKQQNKQQNKQQNKQQNKQQNKQQNKQQNKQQNKQQNKQQNKT8AyJ+2ZJi2s4XAAAAAElFTkSuQmCC">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAAFMUlEQVR4nO3d0XUTMRBG4QknHaSJJK0kJfBGFVRAFbxRArVw6CY8BJ3Yjr279mqkmX/uVwDR7twVwjbO3cPTy5sBIr7MXgDQE0FDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFDCkFjs79/fs9ewqr72QtAbBkiPkTQOLIU8OPz68CV3IagkW4XXkLQRSlFfIigi9gbcIbjhhlBS1PdhZfwsp2oijGbEbSkqjGbEbQcj5iznJ/NCFpK5Z25IWgRxPyOoAV4xpzpuGE2MWh2lD64j8emvA7dhnA4jGw7QQTE/Nndw9PL28gfuGUIxL1uRMwZ5zB0h946BHbuZezMlw0L+tYhEPcxYl42JOheQ6geNzGvcz9DjxqCeuCjY856P1136JFDUN692Zm3c9uhowwhe9wz7mPme+YSdJSYT2UbFDFfr3vQUWM+FX1wxHwb+SPHFtEGScy3k3mVo5fZgyXmfYa99Z0tbLPxgybm/UJ+liMi78ETcx/Dg26yhm3WPwRi7mda0E3msJs9cRBzX9ODbhTCNrsuFmLuL0zQZjpRN0vxELOPUEE3amGbHcdEzH5CBt0ohj1DlZjNggfdEPbtKsVsliTohrCvUy1ms2RBN4S9rmLMZkmDbgj7vKoxmyUPuiHsD5VjNhMJuqkedvWYzcSCbiqGTczvJINuqoRNzB+kg26UwybmYyWCbtTCJubPSgXdKIRNzOeV/MLz7DFkX7+nkjv0oWy7NTEvKx90kyFsYl5X8shxzuPzK8EIYIe+IOqOzUO3jB36AnbsnAh6BWHnQtAbRDp+RFpLRAS9goByIegFxJwPQV8QOebIa5uNoM8gmLwI+gQx50bQBzLFnGmtIxH0fwSigaCNmJWUDzpzzJnX7qV00AShp2zQxKypZNDErKtc0Goxq13PXqWC5pvz9ZUJmphrKBH07JgVf2lnVPJBz44ZY0kHHSlmIh9DNuhIMY/AsePd0KBH3fSoMbNL+7sf9YNaZGux7R161JgxxpAvmukV2Vo4WWL2XGf1h8t9h+45vGjnxOrxROR6ho4WYE97YuZB8OMWNDHPoXzft3AJWvmm9oo58kORWfegiRkzub3KoRa2V8xe96nqw+d2hlb61k6V66jA/Z3C7GF7rz3zvYlo2FvfGQeXcc2N2pFvq6Gf5ci0W49cZ5Z7ksGUT9tFDzvy2rAsxC8NivTXo9pHQKs9nCE+Dx1lx46wBuwTIuhmZtgRYo6whuxCBd2MDls5pEjHuRFCBt0oh3ZJxWvuKXTQZnHO18ghfNBNpbB7X2elY0eaoBuPsCMOvMrD21u6oBsGjnPSBl0BD+31UgfNwLeLeKzykDroCnhor5M+aAaOQ+mDrqDXQ1vh2CERNLs0Gomge4i+e/HQbiMTNAPfJvqDu5dM0BXw0K6TCpqBQyroCno8tMrHDrmg2aVrkwvaTD9q9evbY8j/+v7646f3j0ASv75/c/3zXYMmZFziFbbkkQN1uQXN7owlXn2wQ0MKQUOKW9De/5pFbvyjENiA16ExVOrXoaM5/QyD2jtu6te3Rdkjh/qw1a/vklJBtyGrDlv9+rYodeSAvlI7NPQRNKQQNKQQNKQQNKQQNKQQNKQQNKQQNKQQNKQQNKQQNKQQNKQQNKQQNKQQNKQQNKT8AyJ+2ZJi2s4XAAAAAElFTkSuQmCC">
+<meta name="apple-mobile-web-app-title" content="Viagens">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+:root{--navy:#13294B;--ceu:#6FB0E8;--papel:#F5F8FB;--tinta:#1C2430;--suave:#5B6B80;--input:#EBFFFF;--ok:#2E7D55;--alerta:#B7791F;--erro:#B03A2E;--linha:#D5DEE8;
+ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--papel);color:var(--tinta);font-family:Calibri,Carlito,"Segoe UI",-apple-system,Helvetica,Arial,sans-serif;font-size:17px;line-height:1.45}
+header{background:var(--navy);color:#fff;padding:22px 20px 26px}
+header .wrap{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{margin:0;font-size:30px;font-weight:700;letter-spacing:.2px}
+header p{margin:4px 0 0;color:#BFD6EE;font-size:16px}
+.wrap{max-width:860px;margin:0 auto}
+main{padding:20px}
+section{margin-bottom:28px}
+h2{font-size:22px;margin:0 0 12px;color:var(--navy)}
+.cota{min-width:220px}
+.cota .num{font-size:15px;color:#DCE9F6}
+.barra{height:8px;background:rgba(255,255,255,.18);border-radius:4px;overflow:hidden;margin-top:6px}
+.barra i{display:block;height:100%;background:var(--ceu);width:0}
+.barra i.alto{background:#F2B544}
+form,.painel{background:#fff;border:1px solid var(--linha);border-radius:10px;padding:18px}
+.grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+label{display:block;font-size:15px;color:var(--suave);margin-bottom:4px}
+input,select{width:100%;font:inherit;color:var(--tinta);background:var(--input);border:1px solid #9FC4CC;border-radius:6px;padding:10px 11px;min-height:44px}
+input:focus,select:focus,button:focus-visible{outline:3px solid var(--ceu);outline-offset:1px}
+.dica{font-size:14px;color:var(--suave);margin-top:4px}
+.lembrete{background:#FFF7E6;border-left:4px solid var(--alerta);padding:8px 12px;border-radius:4px;font-size:15px;margin:0 0 14px}
+button{font:inherit;border:0;border-radius:6px;padding:10px 16px;min-height:44px;cursor:pointer}
+.principal{background:var(--navy);color:#fff;font-weight:700}
+.secundario{background:#E4ECF4;color:var(--navy)}
+.perigo{background:#fff;color:var(--erro);border:1px solid #E3B9B4}
+button:disabled{opacity:.5;cursor:default}
+.previa{margin-top:16px;padding:14px;border:1px dashed var(--ceu);border-radius:8px;background:#F4F9FE;font-size:16px}
+.previa code{font-family:inherit;font-weight:700;color:var(--navy)}
+.aviso{color:var(--alerta);font-weight:700}.erro{color:var(--erro);font-weight:700}.certo{color:var(--ok);font-weight:700}
+.acoes{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+#msg{min-height:24px;margin-top:10px}
+/* cartão de viagem: canhoto de cartão de embarque */
+.bilhete{display:grid;grid-template-columns:1fr auto;background:#fff;border:1px solid var(--linha);border-radius:10px;margin-bottom:14px;position:relative;overflow:hidden}
+.bilhete .corpo{padding:16px 18px}
+.bilhete .canhoto{padding:16px 18px;border-left:2px dashed var(--linha);display:flex;flex-direction:column;justify-content:center;gap:8px;min-width:170px;background:#FAFCFE}
+.bilhete .canhoto{position:relative}
+.bilhete .canhoto::before,.bilhete .canhoto::after{content:"";position:absolute;left:-11px;width:20px;height:20px;border-radius:50%;background:var(--papel);border:1px solid var(--linha)}
+.bilhete .canhoto::before{top:-11px}.bilhete .canhoto::after{bottom:-11px}
+.rota{font-size:28px;font-weight:700;color:var(--navy);line-height:1.1}
+.rota small{font-size:16px;font-weight:400;color:var(--suave);margin-left:6px}
+.meta{color:var(--suave);font-size:15px;margin-top:4px}
+.precos{margin-top:8px;font-size:16px}
+.estado{display:inline-block;align-self:center;width:max-content;font-size:14px;padding:2px 8px;border-radius:10px;background:#E6F4EC;color:var(--ok)}
+.estado.aguardando{background:#FFF1D6;color:var(--alerta)}
+.editar{display:none;gap:8px;margin-top:10px}
+.editar.aberto{display:flex}
+.editar input{max-width:140px}
+.vazio{color:var(--suave);padding:18px;background:#fff;border:1px dashed var(--linha);border-radius:10px}
+footer{padding:0 20px 30px;color:var(--suave);font-size:14px}
+@media (max-width:620px){.bilhete{grid-template-columns:1fr}.bilhete .canhoto{border-left:0;border-top:2px dashed var(--linha);flex-direction:row;flex-wrap:wrap}.bilhete .canhoto::before,.bilhete .canhoto::after{display:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div><h1>Gerenciador de Viagens</h1><p>Passagens monitoradas pelo robô, saindo de casa.</p></div>
+  <div class="cota" id="cota"><div class="num">Cota do mês: carregando…</div><div class="barra"><i id="barraCota"></i></div></div>
+</div></header>
+<main class="wrap">
+
+<section id="secToken" hidden>
+  <h2>Conectar ao robô</h2>
+  <div class="painel">
+    <p>Cole o token de acesso do GitHub. Ele fica guardado só neste navegador e dá acesso apenas ao repositório <b>bot-viagens</b>.</p>
+    <label for="token">Token de acesso</label>
+    <input id="token" type="password" autocomplete="off" placeholder="github_pat_...">
+    <div class="acoes"><button class="principal" id="btnToken">Conectar</button></div>
+    <div id="msgToken"></div>
+  </div>
+</section>
+
+<section id="secNova" hidden>
+  <h2>Nova viagem</h2>
+  <form id="form" novalidate>
+    <p class="lembrete">O nome da viagem é montado com o passageiro e o destino, mais o mês e ano da ida (ex.: LISA-GRU-DEZ26). Use o nome principal da viagem no campo Passageiro.</p>
+    <div class="grade">
+      <div><label for="pass">Passageiro</label><input id="pass" required placeholder="Lisa" autocapitalize="characters"></div>
+      <div><label for="origem">Origem</label><input id="origem" value="XNA" maxlength="3" autocapitalize="characters"></div>
+      <div><label for="destino">Destino (aeroporto)</label><input id="destino" maxlength="3" placeholder="GRU" autocapitalize="characters"></div>
+      <div><label for="ida">Ida</label><input id="ida" type="date"></div>
+      <div><label for="volta">Volta</label><input id="volta" type="date"></div>
+      <div><label for="flex">Flexibilidade</label>
+        <select id="flex">
+          <option value="0,0">Datas fixas</option>
+          <option value="1,0">Ida ±1 dia</option>
+          <option value="2,0">Ida ±2 dias</option>
+          <option value="0,1">Volta ±1 dia</option>
+          <option value="0,2">Volta ±2 dias</option>
+          <option value="cruz">Cruz: ida ou volta ±1 dia</option>
+          <option value="1,1">Grade: ida e volta ±1 dia</option>
+        </select></div>
+      <div><label for="adultos">Adultos</label><input id="adultos" type="number" min="1" max="9" value="1" inputmode="numeric"></div>
+      <div><label for="criancas">Crianças</label><input id="criancas" type="number" min="0" max="9" value="0" inputmode="numeric"></div>
+      <div><label for="target">Preço-alvo em US$</label><input id="target" type="number" min="1" inputmode="numeric" placeholder="em branco = aguardar faixa típica">
+        <div class="dica">Sem valor, o robô faz uma consulta e envia a faixa típica.</div></div>
+    </div>
+    <div class="previa" id="previa">Preencha passageiro, destino e datas para ver o resumo.</div>
+    <div class="acoes"><button class="principal" id="btnSalvar" type="submit" disabled>Salvar viagem</button><button class="secundario" type="reset">Limpar</button></div>
+    <div id="msg"></div>
+  </form>
+</section>
+
+<section id="secLista" hidden>
+  <h2>Viagens monitoradas</h2>
+  <div id="lista"></div>
+</section>
+</main>
+<footer class="wrap"><button class="secundario" id="btnAtualizar">Atualizar dados</button> <button class="secundario" id="btnEsquecer">Desconectar este navegador</button></footer>
+
+<script>
+const REPO = "d6t29ggrmy-del/bot-viagens", RAMO = "main";
+const COTA = 250, POR_COMB_MES = 43, PARADA_DIAS = 30;
+const CAMPOS = ["id","origem","destino","ida","volta","flex_ida","flex_volta","adultos","criancas","target","status","parar_em"];
+const MESES = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
+const $ = s => document.querySelector(s);
+let viagens = [], shaCsv = null, estado = {}, alertas = {};
+
+// ---------- armazenamento local do token ----------
+const tokenGet = () => { try { return localStorage.getItem("gv_token") || ""; } catch(e) { return ""; } };
+const tokenSet = t => { try { t ? localStorage.setItem("gv_token", t) : localStorage.removeItem("gv_token"); } catch(e) {} };
+
+// ---------- GitHub ----------
+function b64decode(s){ const bin = atob(s.replace(/\n/g,"")); return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))); }
+function b64encode(t){ const bytes = new TextEncoder().encode(t); let bin = ""; bytes.forEach(b => bin += String.fromCharCode(b)); return btoa(bin); }
+async function gh(caminho, opcoes = {}){
+  const r = await fetch("https://api.github.com/repos/" + REPO + "/contents/" + caminho + (opcoes.method ? "" : "?ref=" + RAMO + "&t=" + Date.now()), {
+    cache: "no-store", ...opcoes,
+    headers: { "Authorization": "Bearer " + tokenGet(), "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" }
+  });
+  if (r.status === 401 || r.status === 403) throw new Error("TOKEN");
+  if (r.status === 404) throw new Error("404");
+  if (r.status === 409 || r.status === 422) throw new Error("CONFLITO");
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  return r.json();
+}
+async function lerArquivo(caminho){ const j = await gh(caminho); return { texto: b64decode(j.content), sha: j.sha }; }
+async function lerJson(caminho){ try { return JSON.parse((await lerArquivo(caminho)).texto || "{}"); } catch(e) { if (e.message === "TOKEN") throw e; return {}; } }
+
+// ---------- CSV ----------
+function parseCsv(txt){
+  const linhas = txt.split(/\r?\n/).filter(l => l.trim());
+  const cab = linhas.shift().split(",").map(s => s.trim());
+  return linhas.map(l => { const v = l.split(","); const o = {}; cab.forEach((c,i) => o[c] = (v[i] || "").trim()); return o; });
+}
+const montarCsv = lista => CAMPOS.join(",") + "\n" + lista.map(v => CAMPOS.map(c => v[c] ?? "").join(",")).join("\n") + "\n";
+
+async function gravarCsv(novaLista, mensagem){
+  await gh("viagens.csv", { method: "PUT", body: JSON.stringify({ message: "Gerenciador: " + mensagem, content: b64encode(montarCsv(novaLista)), sha: shaCsv, branch: RAMO }) });
+}
+
+// ---------- datas ----------
+const hojeChicago = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago" }).format(new Date());
+function somaDias(iso, n){ const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0,10); }
+const br = iso => iso ? iso.slice(8,10) + "/" + iso.slice(5,7) : "—";
+const brAno = iso => iso ? br(iso) + "/" + iso.slice(0,4) : "—";
+const usd = v => "US$ " + Math.round(v).toLocaleString("pt-BR");
+
+// ---------- grupos (mesma regra do robô) ----------
+function grupoDe(id, ids){ const pais = ids.filter(x => x !== id && id.startsWith(x + "-")); return pais.length ? pais.sort((a,b) => b.length - a.length)[0] : id; }
+function agrupar(lista){
+  const ids = lista.map(v => v.id), g = {};
+  lista.forEach(v => (g[grupoDe(v.id, ids)] ||= []).push(v));
+  return g;
+}
+const comb = v => (2 * (+v.flex_ida || 0) + 1) * (2 * (+v.flex_volta || 0) + 1);
+const consumoMes = lista => lista.filter(v => v.status === "ativa").reduce((s,v) => s + comb(v) * POR_COMB_MES, 0);
+
+// ---------- montagem da nova viagem ----------
+function limpaNome(t){ return t.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z0-9]+/g,"-").replace(/^-|-$/g,""); }
+function montarLinhas(){
+  const f = { pass: limpaNome($("#pass").value), origem: $("#origem").value.trim().toUpperCase(), destino: $("#destino").value.trim().toUpperCase(),
+              ida: $("#ida").value, volta: $("#volta").value, flex: $("#flex").value, adultos: $("#adultos").value || "1",
+              criancas: $("#criancas").value || "0", target: $("#target").value.trim() };
+  const erros = [];
+  if (!f.pass) erros.push("Informe o passageiro.");
+  if (!/^[A-Z]{3}$/.test(f.origem)) erros.push("A origem deve ter 3 letras (ex.: XNA).");
+  if (!/^[A-Z]{3}$/.test(f.destino)) erros.push("O destino deve ter 3 letras (ex.: GRU).");
+  if (!f.ida || !f.volta) erros.push("Informe as datas de ida e volta.");
+  else if (f.volta <= f.ida) erros.push("A volta precisa ser depois da ida.");
+  if (erros.length) return { erros };
+  const idBase = f.pass + "-" + f.destino + "-" + MESES[+f.ida.slice(5,7) - 1] + f.ida.slice(2,4);
+  const parar = somaDias(f.ida, -PARADA_DIAS);
+  const status = f.target ? "ativa" : "aguardando_target";
+  const base = { origem: f.origem, destino: f.destino, adultos: f.adultos, criancas: f.criancas, target: f.target, status, parar_em: parar };
+  let linhas;
+  if (f.flex === "cruz") {
+    const v1 = somaDias(f.volta, -1), v2 = somaDias(f.volta, 1);
+    linhas = [ { ...base, id: idBase, ida: f.ida, volta: f.volta, flex_ida: "1", flex_volta: "0" },
+               { ...base, id: idBase + "-V" + v1.slice(8,10), ida: f.ida, volta: v1, flex_ida: "0", flex_volta: "0" },
+               { ...base, id: idBase + "-V" + v2.slice(8,10), ida: f.ida, volta: v2, flex_ida: "0", flex_volta: "0" } ];
+  } else {
+    const [fi, fv] = f.flex.split(",");
+    linhas = [ { ...base, id: idBase, ida: f.ida, volta: f.volta, flex_ida: fi, flex_volta: fv } ];
+  }
+  const avisos = [];
+  if (parar <= hojeChicago()) erros.push("A ida é daqui a menos de 30 dias: o robô encerraria a busca na primeira consulta.");
+  const existentes = viagens.map(v => v.id);
+  const repetidos = linhas.filter(l => existentes.includes(l.id)).map(l => l.id);
+  if (repetidos.length) erros.push("Já existe uma viagem com o nome " + repetidos.join(", ") + ".");
+  return { linhas, erros, avisos, idBase, parar, status };
+}
+
+function atualizarPrevia(){
+  const r = montarLinhas(), p = $("#previa");
+  $("#btnSalvar").disabled = !!r.erros.length || !r.linhas;
+  if (!r.linhas) { p.innerHTML = r.erros.length && ($("#pass").value || $("#destino").value || $("#ida").value) ? '<span class="erro">' + r.erros[0] + '</span>' : "Preencha passageiro, destino e datas para ver o resumo."; return; }
+  const combos = r.linhas.reduce((s,l) => s + comb(l), 0);
+  const atual = consumoMes(viagens);
+  const novo = r.status === "ativa" ? combos * POR_COMB_MES : 0;
+  const total = atual + novo;
+  let cotaTxt;
+  if (r.status !== "ativa") cotaTxt = "Aguardando target: uma única consulta de " + combos + " busca" + (combos > 1 ? "s" : "") + " para trazer a faixa típica.";
+  else cotaTxt = "Consumo desta viagem: cerca de " + novo + " buscas/mês. Com as viagens ativas: " + total + " de " + COTA + ".";
+  let alerta = "";
+  if (r.status === "ativa" && total > COTA) alerta = '<br><span class="erro">Ultrapassa a cota mensal. O robô pausaria as consultas antes do fim do mês. Reduza a flexibilidade ou encerre outra viagem.</span>';
+  else if (r.status === "ativa" && total >= COTA * 0.8) alerta = '<br><span class="aviso">Passa de 80% da cota: você receberá o aviso de cota.</span>';
+  p.innerHTML = "Nome: " + r.linhas.map(l => "<code>" + l.id + "</code>").join(", ") +
+    "<br>" + combos + (combos > 1 ? " combinações" : " combinação") + " de datas. Parada automática em " + brAno(r.parar) + "." +
+    "<br>" + cotaTxt + alerta + (r.erros.length ? '<br><span class="erro">' + r.erros.join(" ") + '</span>' : "");
+}
+
+// ---------- lista ----------
+function desenharLista(){
+  const abertas = viagens.filter(v => v.status !== "encerrada");
+  const L = $("#lista");
+  if (!abertas.length) { L.innerHTML = '<div class="vazio">Nenhuma viagem monitorada. Preencha o formulário acima para cadastrar a primeira.</div>'; return; }
+  const grupos = agrupar(abertas);
+  L.innerHTML = "";
+  Object.entries(grupos).forEach(([gid, membros]) => {
+    const b = membros.find(m => m.id === gid) || membros[0];
+    const combos = membros.reduce((s,m) => s + comb(m), 0);
+    const aguard = membros.some(m => m.status === "aguardando_target");
+    const precos = membros.map(m => alertas[m.id]?.ultimo_preco).filter(Boolean);
+    const melhor = precos.length ? Math.min(...precos) : null;
+    const el = document.createElement("div"); el.className = "bilhete";
+    el.innerHTML = '<div class="corpo"><div class="rota">' + b.origem + " → " + b.destino + "<small>" + gid + "</small></div>" +
+      '<div class="meta">' + brAno(b.ida) + " a " + brAno(b.volta) + " | " + b.adultos + " adulto" + (+b.adultos > 1 ? "s" : "") +
+      (+b.criancas ? " + " + b.criancas + " criança" + (+b.criancas > 1 ? "s" : "") : "") + " | " + combos + " combinaç" + (combos > 1 ? "ões" : "ão") + "</div>" +
+      '<div class="precos">Melhor preço atual: <b>' + (melhor ? usd(melhor) : "aguardando consulta") + "</b> | Target: <b>" + (b.target ? usd(+b.target) : "a definir") + "</b></div>" +
+      '<div class="meta">Parada em ' + brAno(b.parar_em) + "</div>" +
+      '<div class="editar"><input type="number" min="1" inputmode="numeric" placeholder="US$"><button class="principal">Salvar target</button><button class="secundario">Cancelar</button></div></div>' +
+      '<div class="canhoto"><span class="estado' + (aguard ? " aguardando" : "") + '">' + (aguard ? "Aguardando target" : "Ativa") + "</span>" +
+      '<button class="secundario" data-a="target">' + (b.target ? "Alterar target" : "Definir target") + '</button><button class="perigo" data-a="encerrar">Encerrar</button></div>';
+    const ed = el.querySelector(".editar"), inp = ed.querySelector("input");
+    el.querySelector('[data-a="target"]').onclick = () => { ed.classList.add("aberto"); inp.value = b.target || ""; inp.focus(); };
+    ed.querySelector(".secundario").onclick = () => ed.classList.remove("aberto");
+    ed.querySelector(".principal").onclick = () => alterarGrupo(membros, "target", inp.value.trim());
+    el.querySelector('[data-a="encerrar"]').onclick = () => {
+      if (confirm("Encerrar o monitoramento de " + gid + "? O robô deixa de consultar " + (membros.length > 1 ? "as " + membros.length + " linhas desta viagem." : "esta viagem."))) alterarGrupo(membros, "encerrar");
+    };
+    L.appendChild(el);
+  });
+}
+
+async function alterarGrupo(membros, acao, valor){
+  if (acao === "target" && !(+valor > 0)) { alert("Informe um valor em dólares maior que zero."); return; }
+  try {
+    await carregar(true);
+    const ids = membros.map(m => m.id);
+    const nova = viagens.map(v => {
+      if (!ids.includes(v.id)) return v;
+      return acao === "encerrar" ? { ...v, status: "encerrada" } : { ...v, target: String(Math.round(+valor)), status: "ativa" };
+    });
+    await gravarCsv(nova, (acao === "encerrar" ? "encerrar " : "target " + valor + " em ") + ids[0]);
+    await carregar();
+    toast(acao === "encerrar" ? "Viagem encerrada." : "Target salvo. Vale a partir da próxima consulta.");
+  } catch(e) { tratarErro(e); }
+}
+
+// ---------- carregamento ----------
+async function carregar(silencioso){
+  const csv = await lerArquivo("viagens.csv");
+  viagens = parseCsv(csv.texto); shaCsv = csv.sha;
+  if (silencioso) return;
+  [estado, alertas] = await Promise.all([lerJson("estado.json"), lerJson("ja_alertados.json")]);
+  const mes = hojeChicago().slice(0,7), usadas = estado.mes === mes ? (estado.buscas || 0) : 0;
+  const prev = consumoMes(viagens);
+  $("#cota .num").textContent = "Cota do mês: " + usadas + " de " + COTA + " buscas usadas | ritmo das viagens ativas: ~" + prev + "/mês";
+  const bar = $("#barraCota"); bar.style.width = Math.min(100, usadas / COTA * 100) + "%"; bar.className = usadas >= COTA * .8 ? "alto" : "";
+  desenharLista(); atualizarPrevia();
+}
+function toast(t, cls = "certo"){ const m = $("#msg"); m.innerHTML = '<span class="' + cls + '">' + t + "</span>"; }
+function tratarErro(e){
+  if (e.message === "TOKEN") { mostrar(false); $("#msgToken").innerHTML = '<p class="erro">O token foi recusado ou expirou. Gere um novo e cole acima.</p>'; return; }
+  if (e.message === "CONFLITO") { toast("O robô atualizou o arquivo enquanto você editava. Os dados foram recarregados: repita a ação.", "aviso"); carregar(); return; }
+  if (e.message === "404") { toast("Não encontrei o viagens.csv no repositório bot-viagens. Confira o nome do repositório.", "erro"); return; }
+  toast("Falha de comunicação com o GitHub (" + e.message + "). Verifique a internet e tente de novo.", "erro");
+}
+function mostrar(conectado){ $("#secToken").hidden = conectado; $("#secNova").hidden = !conectado; $("#secLista").hidden = !conectado; }
+
+// ---------- eventos ----------
+$("#form").addEventListener("input", atualizarPrevia);
+$("#form").addEventListener("reset", () => setTimeout(() => { $("#origem").value = "XNA"; atualizarPrevia(); $("#msg").innerHTML = ""; }));
+$("#ida").addEventListener("change", () => { if ($("#ida").value) $("#volta").min = somaDias($("#ida").value, 1); });
+$("#form").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const btn = $("#btnSalvar"); btn.disabled = true; btn.textContent = "Salvando…";
+  try {
+    await carregar(true);
+    const r = montarLinhas();
+    if (r.erros.length) { toast(r.erros.join(" "), "erro"); return; }
+    const total = consumoMes(viagens) + (r.status === "ativa" ? r.linhas.reduce((s,l) => s + comb(l), 0) * POR_COMB_MES : 0);
+    if (total > COTA && !confirm("Com esta viagem, o consumo previsto (" + total + "/mês) passa da cota de " + COTA + ". O robô pausaria as consultas antes do fim do mês. Salvar mesmo assim?")) return;
+    await gravarCsv(viagens.concat(r.linhas), "nova viagem " + r.idBase);
+    $("#form").reset();
+    await carregar();
+    toast("Viagem " + r.idBase + " salva. O robô começa na próxima consulta programada.");
+  } catch(e) { tratarErro(e); }
+  finally { btn.textContent = "Salvar viagem"; atualizarPrevia(); }
+});
+$("#btnToken").onclick = async () => {
+  const t = $("#token").value.trim(); if (!t) return;
+  tokenSet(t); $("#msgToken").textContent = "Conectando…";
+  try { mostrar(true); await carregar(); $("#token").value = ""; $("#msgToken").textContent = ""; }
+  catch(e) { tokenSet(""); tratarErro(e); }
+};
+$("#btnAtualizar").onclick = () => carregar().then(() => toast("Dados atualizados.")).catch(tratarErro);
+$("#btnEsquecer").onclick = () => { if (confirm("Remover o token deste navegador?")) { tokenSet(""); location.reload(); } };
+
+(async () => { if (!tokenGet()) { mostrar(false); return; } mostrar(true); try { await carregar(); } catch(e) { tratarErro(e); } })();
+</script>
+</body>
+</html>
