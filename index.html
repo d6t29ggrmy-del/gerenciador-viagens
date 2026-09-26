@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<!-- Gerenciador de Viagens | v1.1 | 25/09/2026 | última alteração: campos de data sem sobreposição no iPad -->
+<!-- Gerenciador de Viagens | v1.2 | 25/09/2026 | última alteração: duração máxima por trecho -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Gerenciador de Viagens</title>
@@ -114,6 +114,8 @@ footer{padding:0 20px 30px;color:var(--suave);font-size:14px}
       <div><label for="criancas">Crianças</label><input id="criancas" type="number" min="0" max="9" value="0" inputmode="numeric"></div>
       <div><label for="target">Preço-alvo em US$</label><input id="target" type="number" min="1" inputmode="numeric" placeholder="em branco = aguardar faixa típica">
         <div class="dica">Sem valor, o robô faz uma consulta e envia a faixa típica.</div></div>
+      <div><label for="duracao">Duração máxima por trecho (horas)</label><input id="duracao" type="number" min="1" step="0.5" inputmode="decimal" placeholder="em branco = sem limite">
+        <div class="dica">Voo mais conexões, valendo para a ida e para a volta.</div></div>
     </div>
     <div class="previa" id="previa">Preencha passageiro, destino e datas para ver o resumo.</div>
     <div class="acoes"><button class="principal" id="btnSalvar" type="submit" disabled>Salvar viagem</button><button class="secundario" type="reset">Limpar</button></div>
@@ -131,7 +133,7 @@ footer{padding:0 20px 30px;color:var(--suave);font-size:14px}
 <script>
 const REPO = "d6t29ggrmy-del/bot-viagens", RAMO = "main";
 const COTA = 250, POR_COMB_MES = 43, PARADA_DIAS = 30;
-const CAMPOS = ["id","origem","destino","ida","volta","flex_ida","flex_volta","adultos","criancas","target","status","parar_em"];
+const CAMPOS = ["id","origem","destino","ida","volta","flex_ida","flex_volta","adultos","criancas","target","status","parar_em","duracao_max"];
 const MESES = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
 const $ = s => document.querySelector(s);
 let viagens = [], shaCsv = null, estado = {}, alertas = {};
@@ -174,6 +176,7 @@ const hojeChicago = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/
 function somaDias(iso, n){ const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0,10); }
 const br = iso => iso ? iso.slice(8,10) + "/" + iso.slice(5,7) : "—";
 const brAno = iso => iso ? br(iso) + "/" + iso.slice(0,4) : "—";
+const limiteTxt = h => { if (!h) return "sem limite"; const n = +h, hh = Math.floor(n), mm = Math.round((n - hh) * 60); return "até " + hh + "h" + (mm ? String(mm).padStart(2, "0") : "") + " por trecho"; };
 const usd = v => "US$ " + Math.round(v).toLocaleString("pt-BR");
 
 // ---------- grupos (mesma regra do robô) ----------
@@ -191,18 +194,19 @@ function limpaNome(t){ return t.normalize("NFD").replace(/[\u0300-\u036f]/g,"").
 function montarLinhas(){
   const f = { pass: limpaNome($("#pass").value), origem: $("#origem").value.trim().toUpperCase(), destino: $("#destino").value.trim().toUpperCase(),
               ida: $("#ida").value, volta: $("#volta").value, flex: $("#flex").value, adultos: $("#adultos").value || "1",
-              criancas: $("#criancas").value || "0", target: $("#target").value.trim() };
+              criancas: $("#criancas").value || "0", target: $("#target").value.trim(), dur: $("#duracao").value.trim() };
   const erros = [];
   if (!f.pass) erros.push("Informe o passageiro.");
   if (!/^[A-Z]{3}$/.test(f.origem)) erros.push("A origem deve ter 3 letras (ex.: XNA).");
   if (!/^[A-Z]{3}$/.test(f.destino)) erros.push("O destino deve ter 3 letras (ex.: GRU).");
   if (!f.ida || !f.volta) erros.push("Informe as datas de ida e volta.");
   else if (f.volta <= f.ida) erros.push("A volta precisa ser depois da ida.");
+  if (f.dur && !(+f.dur >= 1)) erros.push("A duração máxima deve ser de pelo menos 1 hora.");
   if (erros.length) return { erros };
   const idBase = f.pass + "-" + f.destino + "-" + MESES[+f.ida.slice(5,7) - 1] + f.ida.slice(2,4);
   const parar = somaDias(f.ida, -PARADA_DIAS);
   const status = f.target ? "ativa" : "aguardando_target";
-  const base = { origem: f.origem, destino: f.destino, adultos: f.adultos, criancas: f.criancas, target: f.target, status, parar_em: parar };
+  const base = { origem: f.origem, destino: f.destino, adultos: f.adultos, criancas: f.criancas, target: f.target, status, parar_em: parar, duracao_max: f.dur ? String(+f.dur) : "" };
   let linhas;
   if (f.flex === "cruz") {
     const v1 = somaDias(f.volta, -1), v2 = somaDias(f.volta, 1);
@@ -237,6 +241,7 @@ function atualizarPrevia(){
   else if (r.status === "ativa" && total >= COTA * 0.8) alerta = '<br><span class="aviso">Passa de 80% da cota: você receberá o aviso de cota.</span>';
   p.innerHTML = "Nome: " + r.linhas.map(l => "<code>" + l.id + "</code>").join(", ") +
     "<br>" + combos + (combos > 1 ? " combinações" : " combinação") + " de datas. Parada automática em " + brAno(r.parar) + "." +
+    "<br>Duração: " + limiteTxt(r.linhas[0].duracao_max) + "." +
     "<br>" + cotaTxt + alerta + (r.erros.length ? '<br><span class="erro">' + r.erros.join(" ") + '</span>' : "");
 }
 
@@ -258,14 +263,19 @@ function desenharLista(){
       '<div class="meta">' + brAno(b.ida) + " a " + brAno(b.volta) + " | " + b.adultos + " adulto" + (+b.adultos > 1 ? "s" : "") +
       (+b.criancas ? " + " + b.criancas + " criança" + (+b.criancas > 1 ? "s" : "") : "") + " | " + combos + " combinaç" + (combos > 1 ? "ões" : "ão") + "</div>" +
       '<div class="precos">Melhor preço atual: <b>' + (melhor ? usd(melhor) : "aguardando consulta") + "</b> | Target: <b>" + (b.target ? usd(+b.target) : "a definir") + "</b></div>" +
-      '<div class="meta">Parada em ' + brAno(b.parar_em) + "</div>" +
-      '<div class="editar"><input type="number" min="1" inputmode="numeric" placeholder="US$"><button class="principal">Salvar target</button><button class="secundario">Cancelar</button></div></div>' +
+      '<div class="meta">Duração: ' + limiteTxt(b.duracao_max) + " | Parada em " + brAno(b.parar_em) + "</div>" +
+      '<div class="editar"><input type="number" min="1" step="0.5" inputmode="decimal"><button class="principal">Salvar</button><button class="secundario">Cancelar</button></div></div>' +
       '<div class="canhoto"><span class="estado' + (aguard ? " aguardando" : "") + '">' + (aguard ? "Aguardando target" : "Ativa") + "</span>" +
-      '<button class="secundario" data-a="target">' + (b.target ? "Alterar target" : "Definir target") + '</button><button class="perigo" data-a="encerrar">Encerrar</button></div>';
+      '<button class="secundario" data-a="target">' + (b.target ? "Alterar target" : "Definir target") + '</button>' +
+      '<button class="secundario" data-a="duracao">Alterar duração</button><button class="perigo" data-a="encerrar">Encerrar</button></div>';
     const ed = el.querySelector(".editar"), inp = ed.querySelector("input");
-    el.querySelector('[data-a="target"]').onclick = () => { ed.classList.add("aberto"); inp.value = b.target || ""; inp.focus(); };
+    let modo = "target";
+    const abrir = m => { modo = m; ed.classList.add("aberto"); inp.value = (m === "target" ? b.target : b.duracao_max) || "";
+      inp.placeholder = m === "target" ? "US$" : "horas (vazio = sem limite)"; inp.focus(); };
+    el.querySelector('[data-a="target"]').onclick = () => abrir("target");
+    el.querySelector('[data-a="duracao"]').onclick = () => abrir("duracao");
     ed.querySelector(".secundario").onclick = () => ed.classList.remove("aberto");
-    ed.querySelector(".principal").onclick = () => alterarGrupo(membros, "target", inp.value.trim());
+    ed.querySelector(".principal").onclick = () => alterarGrupo(membros, modo, inp.value.trim());
     el.querySelector('[data-a="encerrar"]').onclick = () => {
       if (confirm("Encerrar o monitoramento de " + gid + "? O robô deixa de consultar " + (membros.length > 1 ? "as " + membros.length + " linhas desta viagem." : "esta viagem."))) alterarGrupo(membros, "encerrar");
     };
@@ -275,16 +285,20 @@ function desenharLista(){
 
 async function alterarGrupo(membros, acao, valor){
   if (acao === "target" && !(+valor > 0)) { alert("Informe um valor em dólares maior que zero."); return; }
+  if (acao === "duracao" && valor && !(+valor >= 1)) { alert("Informe a duração em horas (mínimo 1) ou deixe em branco para sem limite."); return; }
   try {
     await carregar(true);
     const ids = membros.map(m => m.id);
     const nova = viagens.map(v => {
       if (!ids.includes(v.id)) return v;
-      return acao === "encerrar" ? { ...v, status: "encerrada" } : { ...v, target: String(Math.round(+valor)), status: "ativa" };
+      if (acao === "encerrar") return { ...v, status: "encerrada" };
+      if (acao === "duracao") return { ...v, duracao_max: valor ? String(+valor) : "" };
+      return { ...v, target: String(Math.round(+valor)), status: "ativa" };
     });
-    await gravarCsv(nova, (acao === "encerrar" ? "encerrar " : "target " + valor + " em ") + ids[0]);
+    const msgs = { encerrar: "encerrar ", duracao: "duração " + (valor || "sem limite") + " em ", target: "target " + valor + " em " };
+    await gravarCsv(nova, msgs[acao] + ids[0]);
     await carregar();
-    toast(acao === "encerrar" ? "Viagem encerrada." : "Target salvo. Vale a partir da próxima consulta.");
+    toast(acao === "encerrar" ? "Viagem encerrada." : (acao === "duracao" ? "Duração salva." : "Target salvo.") + " Vale a partir da próxima consulta.");
   } catch(e) { tratarErro(e); }
 }
 
