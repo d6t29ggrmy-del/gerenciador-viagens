@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<!-- Gerenciador de Viagens | v1.1 | 28/09/2026 19:39 | última alteração: página acompanha o tamanho da tela no computador (escala em rem) -->
+<!-- Gerenciador de Viagens | v1.2 | 11/10/2026 21:40 | última alteração: botão Alterar datas no cartão da viagem -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Gerenciador de Viagens</title>
@@ -70,6 +70,10 @@ button:disabled{opacity:.5;cursor:default}
 .editar{display:none;gap:0.4706rem;margin-top:0.5882rem}
 .editar.aberto{display:flex}
 .editar input{max-width:8.2353rem}
+.editarDatas{display:none;flex-wrap:wrap;align-items:flex-end;gap:0.4706rem;margin-top:0.5882rem}
+.editarDatas.aberto{display:flex}
+.editarDatas label{margin:0}
+.editarDatas input{width:10.5rem}
 .vazio{color:var(--suave);padding:1.0588rem;background:#fff;border:1px dashed var(--linha);border-radius:0.5882rem}
 footer{padding:0 1.1765rem 1.7647rem;color:var(--suave);font-size:0.8235rem}
 @media (max-width:620px) and (hover:none),(max-width:620px) and (pointer:coarse){.lado{align-items:flex-start}.bilhete{grid-template-columns:1fr}.bilhete .canhoto{border-left:0;border-top:2px dashed var(--linha);flex-direction:row;flex-wrap:wrap}.bilhete .canhoto::before,.bilhete .canhoto::after{display:none}}
@@ -80,7 +84,7 @@ footer{padding:0 1.1765rem 1.7647rem;color:var(--suave);font-size:0.8235rem}
 <header><div class="wrap">
   <div><h1>Gerenciador de Viagens</h1><p>Passagens monitoradas pelo robô, saindo de casa.</p></div>
   <div class="lado">
-  <div class="selo" aria-label="Versão do Gerenciador">v1.1 · 28-set-26<br>7:39 pm</div>
+  <div class="selo" aria-label="Versão do Gerenciador">v1.2 · 11-out-26<br>9:40 pm</div>
   <div class="cota" id="cota"><div class="num">Cota do mês: carregando…</div><div class="barra"><i id="barraCota"></i></div></div>
   </div>
 </div></header>
@@ -193,6 +197,8 @@ function agrupar(lista){
   lista.forEach(v => (g[grupoDe(v.id, ids)] ||= []).push(v));
   return g;
 }
+const chaveDatas = v => v.ida + "|" + v.volta + "|" + (v.flex_ida || "0") + "|" + (v.flex_volta || "0");
+const dadosViagem = v => { const a = alertas[v.id] || {}; return (!a.chave || a.chave === chaveDatas(v)) ? a : {}; };
 const comb = v => (2 * (+v.flex_ida || 0) + 1) * (2 * (+v.flex_volta || 0) + 1);
 const consumoMes = lista => lista.filter(v => v.status === "ativa").reduce((s,v) => s + comb(v) * POR_COMB_MES, 0);
 
@@ -263,7 +269,7 @@ function desenharLista(){
     const b = membros.find(m => m.id === gid) || membros[0];
     const combos = membros.reduce((s,m) => s + comb(m), 0);
     const aguard = membros.some(m => m.status === "aguardando_target");
-    const precos = membros.map(m => alertas[m.id]?.ultimo_preco).filter(Boolean);
+    const precos = membros.map(m => dadosViagem(m).ultimo_preco).filter(Boolean);
     const melhor = precos.length ? Math.min(...precos) : null;
     const el = document.createElement("div"); el.className = "bilhete";
     el.innerHTML = '<div class="corpo"><div class="rota">' + b.origem + " → " + b.destino + "<small>" + gid + "</small></div>" +
@@ -271,13 +277,21 @@ function desenharLista(){
       (+b.criancas ? " + " + b.criancas + " criança" + (+b.criancas > 1 ? "s" : "") : "") + " | " + combos + " combinaç" + (combos > 1 ? "ões" : "ão") + "</div>" +
       '<div class="precos">Melhor preço atual: <b>' + (melhor ? usd(melhor) : "aguardando consulta") + "</b> | Target: <b>" + (b.target ? usd(+b.target) : "a definir") + "</b></div>" +
       '<div class="meta">Duração: ' + limiteTxt(b.duracao_max) + " | Parada em " + brAno(b.parar_em) + "</div>" +
-      '<div class="editar"><input type="number" min="1" step="0.5" inputmode="decimal"><button class="principal">Salvar</button><button class="secundario">Cancelar</button></div></div>' +
+      '<div class="editar"><input type="number" min="1" step="0.5" inputmode="decimal"><button class="principal">Salvar</button><button class="secundario">Cancelar</button></div>' +
+      '<div class="editarDatas"><div><label>Nova ida</label><input type="date" data-c="ida"></div><div><label>Nova volta</label><input type="date" data-c="volta"></div>' +
+      '<button class="principal">Salvar datas</button><button class="secundario">Cancelar</button></div></div>' +
       '<div class="canhoto"><span class="estado' + (aguard ? " aguardando" : "") + '">' + (aguard ? "Aguardando target" : "Ativa") + "</span>" +
       '<button class="secundario" data-a="target">' + (b.target ? "Alterar target" : "Definir target") + '</button>' +
-      '<button class="secundario" data-a="duracao">Alterar duração</button><button class="perigo" data-a="encerrar">Encerrar</button></div>';
+      '<button class="secundario" data-a="datas">Alterar datas</button><button class="secundario" data-a="duracao">Alterar duração</button><button class="perigo" data-a="encerrar">Encerrar</button></div>';
     const ed = el.querySelector(".editar"), inp = ed.querySelector("input");
+    const edd = el.querySelector(".editarDatas"), dIda = edd.querySelector('[data-c="ida"]'), dVolta = edd.querySelector('[data-c="volta"]');
     let modo = "target";
-    const abrir = m => { modo = m; ed.classList.add("aberto"); inp.value = (m === "target" ? b.target : b.duracao_max) || "";
+    el.querySelector('[data-a="datas"]').onclick = () => { ed.classList.remove("aberto"); edd.classList.add("aberto");
+      dIda.value = b.ida; dVolta.value = b.volta; dIda.focus(); };
+    dIda.onchange = () => { if (dIda.value) dVolta.min = somaDias(dIda.value, 1); };
+    edd.querySelector(".secundario").onclick = () => edd.classList.remove("aberto");
+    edd.querySelector(".principal").onclick = () => alterarDatas(gid, membros, dIda.value, dVolta.value);
+    const abrir = m => { modo = m; edd.classList.remove("aberto"); ed.classList.add("aberto"); inp.value = (m === "target" ? b.target : b.duracao_max) || "";
       inp.placeholder = m === "target" ? "US$" : "horas (vazio = sem limite)"; inp.focus(); };
     el.querySelector('[data-a="target"]').onclick = () => abrir("target");
     el.querySelector('[data-a="duracao"]').onclick = () => abrir("duracao");
@@ -306,6 +320,35 @@ async function alterarGrupo(membros, acao, valor){
     await gravarCsv(nova, msgs[acao] + ids[0]);
     await carregar();
     toast(acao === "encerrar" ? "Viagem encerrada." : (acao === "duracao" ? "Duração salva." : "Target salvo.") + " Vale a partir da próxima consulta.");
+  } catch(e) { tratarErro(e); }
+}
+
+async function alterarDatas(gid, membros, ida, volta){
+  if (!ida || !volta) { alert("Informe a nova ida e a nova volta."); return; }
+  if (volta <= ida) { alert("A volta precisa ser depois da ida."); return; }
+  const parar = somaDias(ida, -PARADA_DIAS);
+  if (parar <= hojeChicago()) { alert("A nova ida é daqui a menos de 30 dias: o robô encerraria a busca na primeira consulta."); return; }
+  const b = membros.find(m => m.id === gid) || membros[0];
+  if (ida === b.ida && volta === b.volta) { alert("As datas são as mesmas de hoje."); return; }
+  if (!confirm("Mudar " + gid + " para " + brAno(ida) + " a " + brAno(volta) + "?\n\nO menor preço visto e os alertas desta viagem recomeçam do zero com as novas datas. A parada automática passa para " + brAno(parar) + ".")) return;
+  try {
+    await carregar(true);
+    const atuais = viagens.filter(v => membros.some(m => m.id === v.id));
+    const principal = atuais.find(v => v.id === gid) || atuais[0];
+    const dia = iso => new Date(iso + "T12:00:00Z").getTime() / 86400000;
+    const novas = atuais.map(v => {
+      const dIda = dia(v.ida) - dia(principal.ida), dVol = dia(v.volta) - dia(principal.volta);
+      const ni = somaDias(ida, dIda), nv = somaDias(volta, dVol);
+      const id = v.id === gid ? gid : (/-V\d{2}$/.test(v.id) ? gid + "-V" + nv.slice(8,10) : v.id);
+      return { ...v, id, ida: ni, volta: nv, parar_em: parar };
+    });
+    const outros = viagens.filter(v => !atuais.includes(v)).map(v => v.id);
+    const choque = novas.filter(n => outros.includes(n.id)).map(n => n.id);
+    if (choque.length) { toast("Já existe outra viagem com o nome " + choque.join(", ") + ". Escolha outras datas.", "erro"); return; }
+    let i = 0; const nova = viagens.map(v => atuais.includes(v) ? novas[i++] : v);
+    await gravarCsv(nova, "datas " + ida + " a " + volta + " em " + gid);
+    await carregar();
+    toast("Datas de " + gid + " salvas. O histórico de preços recomeça na próxima consulta.");
   } catch(e) { tratarErro(e); }
 }
 
