@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<!-- Gerenciador de Viagens | v1.3 | 11/10/2026 21:50 | última alteração: datas em dd/mm/aa, com campo próprio e botão de calendário -->
+<!-- Gerenciador de Viagens | v1.4 | 12/10/2026 11:20 | última alteração: lista de voos encontrados por combinação de datas no cartão -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Gerenciador de Viagens</title>
@@ -75,6 +75,20 @@ button:disabled{opacity:.5;cursor:default}
 .editarDatas label{margin:0}
 .editarDatas .data{width:11.5rem}
 .data{position:relative;display:flex;gap:0.3529rem}
+.verVoos{margin-top:0.5882rem;background:none;padding:0;min-height:0;color:var(--navy);font-weight:700;text-decoration:underline;text-underline-offset:0.18rem}
+.voos{display:none;margin-top:0.5882rem}
+.voos.aberto{display:block}
+.voos .quando{font-size:0.8235rem;color:var(--suave);margin-bottom:0.3529rem}
+.voos .rolar{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.voos table{border-collapse:collapse;width:100%;font-size:0.8824rem;min-width:30rem}
+.voos th{text-align:left;font-weight:400;color:var(--suave);padding:0.2941rem 0.4706rem;border-bottom:1px solid var(--linha);white-space:nowrap}
+.voos td{padding:0.4118rem 0.4706rem;border-bottom:1px solid #EEF2F6;vertical-align:top}
+.voos td.num{white-space:nowrap;font-variant-numeric:tabular-nums}
+.voos tr.melhor td{background:#F1F8F4}
+.voos tr.melhor td:first-child{font-weight:700}
+.voos tr.alvo td.preco{color:var(--ok);font-weight:700}
+.voos .semvoo{color:var(--suave)}
+.voos a{color:var(--navy);font-weight:700;white-space:nowrap}
 .data input.texto{flex:1;min-width:0}
 .data input.texto.invalido{border-color:var(--erro);outline-color:var(--erro)}
 .data input.nativo{position:absolute;left:0;bottom:0;width:1px;height:1px;min-height:0;padding:0;border:0;opacity:0;pointer-events:none}
@@ -90,7 +104,7 @@ footer{padding:0 1.1765rem 1.7647rem;color:var(--suave);font-size:0.8235rem}
 <header><div class="wrap">
   <div><h1>Gerenciador de Viagens</h1><p>Passagens monitoradas pelo robô, saindo de casa.</p></div>
   <div class="lado">
-  <div class="selo" aria-label="Versão do Gerenciador">v1.3 · 11-out-26<br>9:50 pm</div>
+  <div class="selo" aria-label="Versão do Gerenciador">v1.4 · 12-out-26<br>11:20 am</div>
   <div class="cota" id="cota"><div class="num">Cota do mês: carregando…</div><div class="barra"><i id="barraCota"></i></div></div>
   </div>
 </div></header>
@@ -153,7 +167,8 @@ const COTA = 250, POR_COMB_MES = 43, PARADA_DIAS = 30;
 const CAMPOS = ["id","origem","destino","ida","volta","flex_ida","flex_volta","adultos","criancas","target","status","parar_em","duracao_max"];
 const MESES = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
 const $ = s => document.querySelector(s);
-let viagens = [], shaCsv = null, estado = {}, alertas = {};
+let viagens = [], shaCsv = null, estado = {}, alertas = {}, historico = [];
+const voosAbertos = new Set();
 
 // ---------- armazenamento local do token ----------
 const tokenGet = () => { try { return localStorage.getItem("gv_token") || ""; } catch(e) { return ""; } };
@@ -181,6 +196,21 @@ function parseCsv(txt){
   const linhas = txt.split(/\r?\n/).filter(l => l.trim());
   const cab = linhas.shift().split(",").map(s => s.trim());
   return linhas.map(l => { const v = l.split(","); const o = {}; cab.forEach((c,i) => o[c] = (v[i] || "").trim()); return o; });
+}
+function linhaCsv(l){
+  const out = []; let cur = "", q = false;
+  for (let i = 0; i < l.length; i++) {
+    const c = l[i];
+    if (q) { if (c === '"' && l[i+1] === '"') { cur += '"'; i++; } else if (c === '"') q = false; else cur += c; }
+    else if (c === '"') q = true; else if (c === ",") { out.push(cur); cur = ""; } else cur += c;
+  }
+  out.push(cur); return out;
+}
+function parseCsvAspas(txt){
+  const linhas = txt.split(/\r?\n/).filter(l => l.trim());
+  if (!linhas.length) return [];
+  const cab = linhaCsv(linhas.shift()).map(x => x.trim());
+  return linhas.map(l => { const v = linhaCsv(l), o = {}; cab.forEach((c,i) => o[c] = (v[i] || "").trim()); return o; });
 }
 const montarCsv = lista => CAMPOS.join(",") + "\n" + lista.map(v => CAMPOS.map(c => v[c] ?? "").join(",")).join("\n") + "\n";
 
@@ -300,6 +330,52 @@ function atualizarPrevia(){
     "<br>" + cotaTxt + alerta + (r.erros.length ? '<br><span class="erro">' + r.erros.join(" ") + '</span>' : "");
 }
 
+// ---------- voos encontrados ----------
+function combinacoesDe(v){
+  const fi = +v.flex_ida || 0, fv = +v.flex_volta || 0, r = [];
+  for (let i = -fi; i <= fi; i++) for (let j = -fv; j <= fv; j++) {
+    const a = somaDias(v.ida, i), b = somaDias(v.volta, j);
+    if (b > a) r.push({ id: v.id, ida: a, volta: b, linha: v });
+  }
+  return r;
+}
+const horasTxt = min => { if (!min) return ""; const h = Math.floor(min / 60), m = min % 60; return h + "h" + (m ? String(m).padStart(2, "0") : ""); };
+const escalasTxt = n => { n = +n || 0; return n === 0 ? "direto" : n + (n === 1 ? " escala" : " escalas"); };
+const buscaGoogle = (o, de, ida, volta) => "https://www.google.com/travel/flights?hl=pt-BR&curr=USD&q=" +
+  encodeURIComponent("Flights from " + o + " to " + de + " on " + ida + " through " + volta);
+const dataHoraTxt = dh => dh ? dh.slice(8,10) + "/" + dh.slice(5,7) + "/" + dh.slice(2,4) + " às " + dh.slice(11,16) : "";
+function tabelaVoos(membros){
+  const combos = membros.flatMap(combinacoesDe).sort((x, y) => (x.ida + x.volta).localeCompare(y.ida + y.volta));
+  const ultimaPorId = {};
+  historico.forEach(h => { if (!ultimaPorId[h.id] || h.data_hora > ultimaPorId[h.id]) ultimaPorId[h.id] = h.data_hora; });
+  const linhas = combos.map(c => {
+    const hs = historico.filter(h => h.id === c.id && h.ida === c.ida && h.volta === c.volta);
+    const ult = hs.reduce((m, h) => (!m || h.data_hora > m.data_hora) ? h : m, null);
+    const atual = ult && ult.data_hora === ultimaPorId[c.id] ? ult : null;
+    const menor = hs.length ? Math.min(...hs.map(h => +h.preco)) : null;
+    const a = dadosViagem(c.linha), mesmo = a.ultimo_ida === c.ida && a.ultimo_volta === c.volta;
+    return { ...c, atual, menor, dur: mesmo ? a.ultimo_duracao : null,
+             link: (mesmo && a.ultimo_link) || buscaGoogle(c.linha.origem, c.linha.destino, c.ida, c.volta) };
+  });
+  const comPreco = linhas.filter(l => l.atual);
+  const melhor = comPreco.length ? Math.min(...comPreco.map(l => +l.atual.preco)) : null;
+  const ult = Object.entries(ultimaPorId).filter(([id]) => membros.some(m => m.id === id)).map(([, dh]) => dh).sort().pop();
+  const alvo = +(membros[0].target || 0);
+  const algumAlvo = alvo && comPreco.some(l => +l.atual.preco <= alvo);
+  let html = '<div class="quando">' + (ult ? "Última consulta: " + dataHoraTxt(ult) : "Ainda não há consultas registradas para estas datas.") +
+    (algumAlvo ? " | Em verde: preço no target ou abaixo." : "") + "</div>" +
+    '<div class="rolar"><table><thead><tr><th>Datas</th><th>Preço atual</th><th>Menor visto</th><th>Voo</th><th></th></tr></thead><tbody>';
+  linhas.forEach(l => {
+    const p = l.atual ? +l.atual.preco : null;
+    const cls = [p !== null && p === melhor ? "melhor" : "", p !== null && alvo && p <= alvo ? "alvo" : ""].join(" ").trim();
+    const voo = l.atual ? [l.atual.companhia, escalasTxt(l.atual.escalas), l.dur ? "ida em " + horasTxt(l.dur) : ""].filter(Boolean).join(" | ") : '<span class="semvoo">sem voo na última consulta</span>';
+    html += '<tr class="' + cls + '"><td class="num">' + (p !== null && p === melhor ? "🏆 " : "") + br(l.ida) + " a " + br(l.volta) + "</td>" +
+      '<td class="num preco">' + (p !== null ? usd(p) : "—") + '</td><td class="num">' + (l.menor !== null ? usd(l.menor) : "—") + "</td>" +
+      "<td>" + voo + '</td><td><a href="' + l.link + '" target="_blank" rel="noopener">Abrir ↗</a></td></tr>';
+  });
+  return html + "</tbody></table></div>";
+}
+
 // ---------- lista ----------
 function desenharLista(){
   const abertas = viagens.filter(v => v.status !== "encerrada");
@@ -319,6 +395,8 @@ function desenharLista(){
       (+b.criancas ? " + " + b.criancas + " criança" + (+b.criancas > 1 ? "s" : "") : "") + " | " + combos + " combinaç" + (combos > 1 ? "ões" : "ão") + "</div>" +
       '<div class="precos">Melhor preço atual: <b>' + (melhor ? usd(melhor) : "aguardando consulta") + "</b> | Target: <b>" + (b.target ? usd(+b.target) : "a definir") + "</b></div>" +
       '<div class="meta">Duração: ' + limiteTxt(b.duracao_max) + " | Parada em " + brAno(b.parar_em) + "</div>" +
+      '<button class="verVoos" type="button" aria-expanded="false">Ver voos encontrados (' + combos + ')</button>' +
+      '<div class="voos"></div>' +
       '<div class="editar"><input type="number" min="1" step="0.5" inputmode="decimal"><button class="principal">Salvar</button><button class="secundario">Cancelar</button></div>' +
       '<div class="editarDatas"><div><label>Nova ida</label><input type="date" data-c="ida"></div><div><label>Nova volta</label><input type="date" data-c="volta"></div>' +
       '<button class="principal">Salvar datas</button><button class="secundario">Cancelar</button></div></div>' +
@@ -343,6 +421,14 @@ function desenharLista(){
     el.querySelector('[data-a="encerrar"]').onclick = () => {
       if (confirm("Encerrar o monitoramento de " + gid + "? O robô deixa de consultar " + (membros.length > 1 ? "as " + membros.length + " linhas desta viagem." : "esta viagem."))) alterarGrupo(membros, "encerrar");
     };
+    const bv = el.querySelector(".verVoos"), cx = el.querySelector(".voos");
+    const mostrarVoos = abrir => {
+      if (abrir) { cx.innerHTML = tabelaVoos(membros); voosAbertos.add(gid); } else voosAbertos.delete(gid);
+      cx.classList.toggle("aberto", abrir); bv.setAttribute("aria-expanded", abrir);
+      bv.textContent = (abrir ? "Ocultar voos encontrados" : "Ver voos encontrados") + " (" + combos + ")";
+    };
+    bv.onclick = () => mostrarVoos(!cx.classList.contains("aberto"));
+    if (voosAbertos.has(gid)) mostrarVoos(true);
     L.appendChild(el);
   });
 }
@@ -400,7 +486,10 @@ async function carregar(silencioso){
   const csv = await lerArquivo("viagens.csv");
   viagens = parseCsv(csv.texto); shaCsv = csv.sha;
   if (silencioso) return;
-  [estado, alertas] = await Promise.all([lerJson("estado.json"), lerJson("ja_alertados.json")]);
+  let hist;
+  [estado, alertas, hist] = await Promise.all([lerJson("estado.json"), lerJson("ja_alertados.json"),
+    lerArquivo("historico_precos.csv").then(r => r.texto).catch(e => { if (e.message === "TOKEN") throw e; return ""; })]);
+  historico = parseCsvAspas(hist);
   const mes = hojeChicago().slice(0,7), usadas = estado.mes === mes ? (estado.buscas || 0) : 0;
   const prev = consumoMes(viagens);
   $("#cota .num").textContent = "Cota do mês: " + usadas + " de " + COTA + " buscas usadas | ritmo das viagens ativas: ~" + prev + "/mês";
