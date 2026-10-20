@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<!-- Gerenciador de Viagens | v1.5 | 20/10/2026 18:35 | última alteração: botões Atualizar/Desconectar no cabeçalho, selo na última linha à direita | v1.4 | 12/10/2026 11:20 | alteração anterior: lista de voos encontrados por combinação de datas no cartão -->
+<!-- Gerenciador de Viagens | v1.6 | 20/10/2026 18:40 | linha da cota em amarelo | v1.5 | 20/10/2026 18:35 | última alteração: botões Atualizar/Desconectar no cabeçalho, selo na última linha à direita | v1.4 | 12/10/2026 11:20 | alteração anterior: lista de voos encontrados por combinação de datas no cartão -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Gerenciador de Viagens</title>
@@ -103,6 +103,7 @@ footer{padding:0 1.1765rem 1.7647rem;color:var(--suave);font-size:0.8235rem}
 .btn-topo{font:inherit;font-size:0.85rem;font-weight:700;color:#fff;background:transparent;border:1px solid #6F86A0;border-radius:0.6rem;padding:0.4rem 0.75rem;cursor:pointer;min-height:2.2rem}
 .btn-topo:hover{background:#ffffff1f;border-color:#C3D0DD}
 header .lado{margin-left:auto}
+header .cota .num{color:#FFD54F}
 header .lado .selo{align-self:flex-end;text-align:right}
 @media (max-width:620px){.lado{width:100%}.topo-dir{justify-content:flex-start}}
 </style>
@@ -113,7 +114,7 @@ header .lado .selo{align-self:flex-end;text-align:right}
   <div class="lado">
   <div class="topo-dir"><button class="btn-topo" id="btnAtualizar">Atualizar dados</button><button class="btn-topo" id="btnEsquecer">Desconectar este navegador</button></div>
   <div class="cota" id="cota"><div class="num">Cota do mês: carregando…</div><div class="barra"><i id="barraCota"></i></div></div>
-  <div class="selo" aria-label="Versão do Gerenciador">v1.5 · 20-out-26<br>6:35 pm</div>
+  <div class="selo" aria-label="Versão do Gerenciador">v1.6 · 20-out-26<br>6:40 pm</div>
   </div>
 </div></header>
 <main class="wrap">
