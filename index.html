@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<!-- Gerenciador de Viagens | v1.6 | 20/10/2026 18:40 | linha da cota em amarelo | v1.5 | 20/10/2026 18:35 | última alteração: botões Atualizar/Desconectar no cabeçalho, selo na última linha à direita | v1.4 | 12/10/2026 11:20 | alteração anterior: lista de voos encontrados por combinação de datas no cartão -->
+<!-- Gerenciador de Viagens | v2.0 | 24/10/2026 18:11 | última alteração: pesquisa com vários trechos (bilhete único x trechos separados, conexão, folgas, mala 23 kg), frequência por fases, consumo de cota por tipo de pesquisa, CSV preserva todas as colunas, campos em #DDEBF7 | v1.6 | 20/10/2026 18:40 | linha da cota em amarelo | v1.5 | 20/10/2026 18:35 | última alteração: botões Atualizar/Desconectar no cabeçalho, selo na última linha à direita | v1.4 | 12/10/2026 11:20 | alteração anterior: lista de voos encontrados por combinação de datas no cartão -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Gerenciador de Viagens</title>
@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="Viagens">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <style>
-:root{--navy:#13294B;--ceu:#6FB0E8;--papel:#F5F8FB;--tinta:#1C2430;--suave:#5B6B80;--input:#EBFFFF;--ok:#2E7D55;--alerta:#B7791F;--erro:#B03A2E;--linha:#D5DEE8;
+:root{--navy:#13294B;--ceu:#6FB0E8;--papel:#F5F8FB;--tinta:#1C2430;--suave:#5B6B80;--input:#DDEBF7;--ok:#2E7D55;--alerta:#B7791F;--erro:#B03A2E;--linha:#D5DEE8;
  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
 *,*::before,*::after{box-sizing:inherit}
 html{scroll-padding-top:env(safe-area-inset-top,0px);font-size:17px;-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -106,6 +106,13 @@ header .lado{margin-left:auto}
 header .cota .num{color:#FFD54F}
 header .lado .selo{align-self:flex-end;text-align:right}
 @media (max-width:620px){.lado{width:100%}.topo-dir{justify-content:flex-start}}
+[hidden]{display:none!important}
+.bloco{grid-column:1/-1;border-top:1px solid var(--linha);padding-top:0.8235rem;margin-top:0.2353rem}
+.bloco h3{margin:0 0 0.5882rem;font-size:1rem;color:var(--navy)}
+.multiInfo{margin-top:0.4706rem;font-size:0.8824rem;color:var(--tinta);background:#F4F9FE;border:1px solid var(--linha);border-radius:0.3529rem;padding:0.4706rem 0.7059rem}
+.resumoMulti{font-size:0.9412rem;line-height:1.5}
+.resumoMulti div{padding:0.3529rem 0;border-bottom:1px solid #EEF2F6}
+.resumoMulti a{color:var(--navy);font-weight:700}
 </style>
 </head>
 <body>
@@ -114,7 +121,7 @@ header .lado .selo{align-self:flex-end;text-align:right}
   <div class="lado">
   <div class="topo-dir"><button class="btn-topo" id="btnAtualizar">Atualizar dados</button><button class="btn-topo" id="btnEsquecer">Desconectar este navegador</button></div>
   <div class="cota" id="cota"><div class="num">Cota do mês: carregando…</div><div class="barra"><i id="barraCota"></i></div></div>
-  <div class="selo" aria-label="Versão do Gerenciador">v1.6 · 20-out-26<br>6:40 pm</div>
+  <div class="selo" aria-label="Versão do Gerenciador">v2.0 · 24-out-26<br>6:11 pm</div>
   </div>
 </div></header>
 <main class="wrap">
@@ -154,8 +161,36 @@ header .lado .selo{align-self:flex-end;text-align:right}
       <div><label for="criancas">Crianças</label><input id="criancas" type="number" min="0" max="9" value="0" inputmode="numeric"></div>
       <div><label for="target">Preço-alvo em US$</label><input id="target" type="number" min="1" inputmode="numeric" placeholder="em branco = aguardar faixa típica">
         <div class="dica">Sem valor, o robô faz uma consulta e envia a faixa típica.</div></div>
-      <div><label for="duracao">Duração máxima por trecho (horas)</label><input id="duracao" type="number" min="1" step="0.5" inputmode="decimal" placeholder="em branco = sem limite">
-        <div class="dica">Voo mais conexões, valendo para a ida e para a volta.</div></div>
+      <div><label for="duracao" id="lblDur">Duração máxima por trecho (horas)</label><input id="duracao" type="number" min="1" step="0.5" inputmode="decimal" placeholder="em branco = sem limite">
+        <div class="dica" id="dicaDur">Voo mais conexões, valendo para a ida e para a volta.</div></div>
+      <div class="bloco"><h3>Tipo de pesquisa</h3>
+        <div class="grade">
+          <div><label for="modo">Tipo</label>
+            <select id="modo">
+              <option value="simples">Trecho simples (origem ⇄ destino)</option>
+              <option value="multi">Vários trechos (bilhete único x trechos separados)</option>
+            </select>
+            <div class="dica" id="dicaModo">O robô compara as passagens de origem a destino.</div></div>
+          <div class="soMulti" hidden><label for="conexao">Conexão para os trechos separados</label><input id="conexao" value="GRU" maxlength="3" autocapitalize="characters">
+            <div class="dica">Aeroporto onde um bilhete termina e o outro começa.</div></div>
+          <div class="soMulti" hidden><label for="folgaMin">Folga mínima entre bilhetes (h)</label><input id="folgaMin" type="number" min="1" step="0.5" value="3" inputmode="decimal"></div>
+          <div class="soMulti" hidden><label for="folgaIdeal">Folga ideal até (h)</label><input id="folgaIdeal" type="number" min="1" step="0.5" value="5" inputmode="decimal">
+            <div class="dica">Acima disso, a opção vem marcada no alerta.</div></div>
+          <div class="soMulti" hidden><label for="folgaMax">Folga máxima aceita (h)</label><input id="folgaMax" type="number" min="1" step="0.5" value="6" inputmode="decimal"></div>
+          <div class="soMulti" hidden><label for="mala">Mala despachada</label>
+            <select id="mala"><option value="1">1 mala de 23 kg no total</option><option value="0">Sem mala</option></select>
+            <div class="dica">Quando o Google não informa, a opção vem como “mala não confirmada”.</div></div>
+        </div></div>
+      <div class="bloco"><h3>Frequência das consultas</h3>
+        <div class="grade">
+          <div><label for="freq">Frequência</label>
+            <select id="freq">
+              <option value="padrao">Padrão do robô (seg–qua 2x/dia, qui–dom 1x/dia)</option>
+              <option value="fases">Por fases (mensal e depois semanal)</option>
+            </select></div>
+          <div class="soFases" hidden><label for="mensalAte">Mensal até</label><input id="mensalAte" type="date">
+            <div class="dica">Até esta data: 1ª terça do mês. Depois: toda terça. Quarta = repescagem se a terça falhar.</div></div>
+        </div></div>
     </div>
     <div class="previa" id="previa">Preencha passageiro, destino e datas para ver o resumo.</div>
     <div class="acoes"><button class="principal" id="btnSalvar" type="submit" disabled>Salvar viagem</button><button class="secundario" type="reset">Limpar</button></div>
@@ -172,7 +207,10 @@ header .lado .selo{align-self:flex-end;text-align:right}
 <script>
 const REPO = "d6t29ggrmy-del/bot-viagens", RAMO = "main";
 const COTA = 250, POR_COMB_MES = 43, PARADA_DIAS = 30;
-const CAMPOS = ["id","origem","destino","ida","volta","flex_ida","flex_volta","adultos","criancas","target","status","parar_em","duracao_max"];
+const CAMPOS = ["id","origem","destino","ida","volta","flex_ida","flex_volta","adultos","criancas","target","status","parar_em","duracao_max",
+                "modo","conexao","folga_min","folga_ideal","folga_max","mala","frequencia","mensal_ate"];
+const BUSCAS_MULTI = 12;           // buscas por execução numa pesquisa com vários trechos (medido nos testes: 11–12)
+let cabCsv = [];                   // colunas do arquivo, para não perder nenhuma ao gravar
 const MESES = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
 const $ = s => document.querySelector(s);
 let viagens = [], shaCsv = null, estado = {}, alertas = {}, historico = [];
@@ -203,6 +241,7 @@ async function lerJson(caminho){ try { return JSON.parse((await lerArquivo(camin
 function parseCsv(txt){
   const linhas = txt.split(/\r?\n/).filter(l => l.trim());
   const cab = linhas.shift().split(",").map(s => s.trim());
+  cabCsv = cab;
   return linhas.map(l => { const v = l.split(","); const o = {}; cab.forEach((c,i) => o[c] = (v[i] || "").trim()); return o; });
 }
 function linhaCsv(l){
@@ -220,7 +259,10 @@ function parseCsvAspas(txt){
   const cab = linhaCsv(linhas.shift()).map(x => x.trim());
   return linhas.map(l => { const v = linhaCsv(l), o = {}; cab.forEach((c,i) => o[c] = (v[i] || "").trim()); return o; });
 }
-const montarCsv = lista => CAMPOS.join(",") + "\n" + lista.map(v => CAMPOS.map(c => v[c] ?? "").join(",")).join("\n") + "\n";
+function montarCsv(lista){
+  const cols = CAMPOS.concat(cabCsv.filter(c => c && !CAMPOS.includes(c)));   // preserva colunas que o Gerenciador não conhece
+  return cols.join(",") + "\n" + lista.map(v => cols.map(c => v[c] ?? "").join(",")).join("\n") + "\n";
+}
 
 async function gravarCsv(novaLista, mensagem){
   await gh("viagens.csv", { method: "PUT", body: JSON.stringify({ message: "Gerenciador: " + mensagem, content: b64encode(montarCsv(novaLista)), sha: shaCsv, branch: RAMO }) });
@@ -231,7 +273,10 @@ const hojeChicago = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/
 function somaDias(iso, n){ const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0,10); }
 const br = iso => iso ? iso.slice(8,10) + "/" + iso.slice(5,7) : "—";
 const brAno = iso => iso ? br(iso) + "/" + iso.slice(2,4) : "—";
-const limiteTxt = h => { if (!h) return "sem limite"; const n = +h, hh = Math.floor(n), mm = Math.round((n - hh) * 60); return "até " + hh + "h" + (mm ? String(mm).padStart(2, "0") : "") + " por trecho"; };
+const limiteTxt = (h, multi) => { if (!h) return "sem limite"; const n = +h, hh = Math.floor(n), mm = Math.round((n - hh) * 60); return "até " + hh + "h" + (mm ? String(mm).padStart(2, "0") : "") + (multi ? " por sentido (com a espera)" : " por trecho"); };
+const ehMulti = v => (v.modo || "simples") === "multi";
+const ehFases = v => (v.frequencia || "padrao") === "fases";
+const hTxt = h => { const n = +h, hh = Math.floor(n), mm = Math.round((n - hh) * 60); return hh + "h" + (mm ? String(mm).padStart(2, "0") : ""); };
 const usd = v => "US$ " + Math.round(v).toLocaleString("pt-BR");
 
 // ---------- campo de data em dd/mm/aa ----------
@@ -280,14 +325,22 @@ function agrupar(lista){
 const chaveDatas = v => v.ida + "|" + v.volta + "|" + (v.flex_ida || "0") + "|" + (v.flex_volta || "0");
 const dadosViagem = v => { const a = alertas[v.id] || {}; return (!a.chave || a.chave === chaveDatas(v)) ? a : {}; };
 const comb = v => (2 * (+v.flex_ida || 0) + 1) * (2 * (+v.flex_volta || 0) + 1);
-const consumoMes = lista => lista.filter(v => v.status === "ativa").reduce((s,v) => s + comb(v) * POR_COMB_MES, 0);
+// buscas por execução x execuções por mês (padrão: ~43 execuções/mês; fases: 1/mês na fase mensal, ~4,3/mês na semanal)
+const porExec = v => ehMulti(v) ? BUSCAS_MULTI : comb(v);
+const execMes = (v, hoje = hojeChicago()) => !ehFases(v) ? POR_COMB_MES : (v.mensal_ate && hoje <= v.mensal_ate ? 1 : 4.3);
+const consumoViagem = (v, hoje) => Math.round(porExec(v) * execMes(v, hoje));
+const consumoMes = lista => lista.filter(v => v.status === "ativa").reduce((s,v) => s + consumoViagem(v), 0);
 
 // ---------- montagem da nova viagem ----------
 function limpaNome(t){ return t.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z0-9]+/g,"-").replace(/^-|-$/g,""); }
 function montarLinhas(){
   const f = { pass: limpaNome($("#pass").value), origem: $("#origem").value.trim().toUpperCase(), destino: $("#destino").value.trim().toUpperCase(),
               ida: $("#ida").value, volta: $("#volta").value, flex: $("#flex").value, adultos: $("#adultos").value || "1",
-              criancas: $("#criancas").value || "0", target: $("#target").value.trim(), dur: $("#duracao").value.trim() };
+              criancas: $("#criancas").value || "0", target: $("#target").value.trim(), dur: $("#duracao").value.trim(),
+              modo: $("#modo").value, conexao: $("#conexao").value.trim().toUpperCase(), fmin: $("#folgaMin").value.trim(),
+              fideal: $("#folgaIdeal").value.trim(), fmax: $("#folgaMax").value.trim(), mala: $("#mala").value,
+              freq: $("#freq").value, mensalAte: $("#mensalAte").value };
+  const multi = f.modo === "multi", fases = f.freq === "fases";
   const erros = [];
   if (!f.pass) erros.push("Informe o passageiro.");
   if (!/^[A-Z]{3}$/.test(f.origem)) erros.push("A origem deve ter 3 letras (ex.: XNA).");
@@ -295,13 +348,25 @@ function montarLinhas(){
   if (!f.ida || !f.volta) erros.push("Informe as datas de ida e volta.");
   else if (f.volta <= f.ida) erros.push("A volta precisa ser depois da ida.");
   if (f.dur && !(+f.dur >= 1)) erros.push("A duração máxima deve ser de pelo menos 1 hora.");
+  if (multi) {
+    if (!/^[A-Z]{3}$/.test(f.conexao)) erros.push("A conexão deve ter 3 letras (ex.: GRU).");
+    else if (f.conexao === f.origem || f.conexao === f.destino) erros.push("A conexão precisa ser diferente da origem e do destino.");
+    if (!(+f.fmin >= 1) || !(+f.fideal >= +f.fmin) || !(+f.fmax >= +f.fideal)) erros.push("As folgas devem seguir: mínima (pelo menos 1h) ≤ ideal ≤ máxima.");
+  }
+  if (fases && !f.mensalAte) erros.push("Informe até quando a consulta é mensal.");
   if (erros.length) return { erros };
   const idBase = f.pass + "-" + f.destino + "-" + MESES[+f.ida.slice(5,7) - 1] + f.ida.slice(2,4);
   const parar = somaDias(f.ida, -PARADA_DIAS);
   const status = f.target ? "ativa" : "aguardando_target";
-  const base = { origem: f.origem, destino: f.destino, adultos: f.adultos, criancas: f.criancas, target: f.target, status, parar_em: parar, duracao_max: f.dur ? String(+f.dur) : "" };
+  const base = { origem: f.origem, destino: f.destino, adultos: f.adultos, criancas: f.criancas, target: f.target, status, parar_em: parar, duracao_max: f.dur ? String(+f.dur) : "",
+                 modo: multi ? "multi" : "", conexao: multi ? f.conexao : "", folga_min: multi ? String(+f.fmin) : "",
+                 folga_ideal: multi ? String(+f.fideal) : "", folga_max: multi ? String(+f.fmax) : "", mala: multi ? f.mala : "",
+                 frequencia: fases ? "fases" : "", mensal_ate: fases ? f.mensalAte : "" };
+  if (fases && (f.mensalAte < hojeChicago() || f.mensalAte >= parar)) erros.push("A data “Mensal até” precisa ficar entre hoje e a parada automática (" + brAno(parar) + ").");
   let linhas;
-  if (f.flex === "cruz") {
+  if (multi) {
+    linhas = [ { ...base, id: idBase, ida: f.ida, volta: f.volta, flex_ida: "0", flex_volta: "0" } ];
+  } else if (f.flex === "cruz") {
     const v1 = somaDias(f.volta, -1), v2 = somaDias(f.volta, 1);
     linhas = [ { ...base, id: idBase, ida: f.ida, volta: f.volta, flex_ida: "1", flex_volta: "0" },
                { ...base, id: idBase + "-V" + v1.slice(8,10), ida: f.ida, volta: v1, flex_ida: "0", flex_volta: "0" },
@@ -318,23 +383,43 @@ function montarLinhas(){
   return { linhas, erros, avisos, idBase, parar, status };
 }
 
+const descMulti = v => "bilhete único " + v.origem + " ⇄ " + v.destino + " x trechos separados com troca em " + (v.conexao || "GRU") +
+  " | espera de " + hTxt(v.folga_min || 3) + " a " + hTxt(v.folga_ideal || 5) + " (aceita até " + hTxt(v.folga_max || 6) + ")" +
+  " | " + (v.mala === "0" ? "sem mala" : "mala de 23 kg") + " | 3 melhores de cada";
+const descFreq = v => ehFases(v) ? "1ª terça do mês até " + brAno(v.mensal_ate) + ", depois toda terça (quarta = repescagem)" : "padrão do robô";
+function ajustarTipo(){
+  const multi = $("#modo").value === "multi", fases = $("#freq").value === "fases";
+  document.querySelectorAll(".soMulti").forEach(e => e.hidden = !multi);
+  document.querySelectorAll(".soFases").forEach(e => e.hidden = !fases);
+  $("#flex").disabled = multi; if (multi) $("#flex").value = "0,0";
+  $("#lblDur").textContent = multi ? "Duração máxima por sentido (horas)" : "Duração máxima por trecho (horas)";
+  $("#dicaDur").textContent = multi ? "Viagem inteira de cada sentido: voos, conexões e a espera entre os bilhetes." : "Voo mais conexões, valendo para a ida e para a volta.";
+  $("#dicaModo").textContent = multi ? "Datas fixas. O robô compara o bilhete único com os bilhetes separados e mostra as 3 melhores de cada." : "O robô compara as passagens de origem a destino.";
+}
 function atualizarPrevia(){
   const r = montarLinhas(), p = $("#previa");
   $("#btnSalvar").disabled = !!r.erros.length || !r.linhas;
   if (!r.linhas) { p.innerHTML = r.erros.length && ($("#pass").value || $("#destino").value || $("#ida").value) ? '<span class="erro">' + r.erros[0] + '</span>' : "Preencha passageiro, destino e datas para ver o resumo."; return; }
   const combos = r.linhas.reduce((s,l) => s + comb(l), 0);
+  const l0 = r.linhas[0], multi = ehMulti(l0), fases = ehFases(l0);
+  const umaVez = r.linhas.reduce((s,l) => s + porExec(l), 0);
   const atual = consumoMes(viagens);
-  const novo = r.status === "ativa" ? combos * POR_COMB_MES : 0;
+  const novo = r.status === "ativa" ? r.linhas.reduce((s,l) => s + consumoViagem(l), 0) : 0;
   const total = atual + novo;
   let cotaTxt;
-  if (r.status !== "ativa") cotaTxt = "Aguardando target: uma única consulta de " + combos + " busca" + (combos > 1 ? "s" : "") + " para trazer a faixa típica.";
-  else cotaTxt = "Consumo desta viagem: cerca de " + novo + " buscas/mês. Com as viagens ativas: " + total + " de " + COTA + ".";
+  if (r.status !== "ativa") cotaTxt = "Aguardando target: uma única consulta de " + (multi ? "cerca de " : "") + umaVez + " busca" + (umaVez > 1 ? "s" : "") + " para trazer a faixa típica" + (fases ? " (na primeira terça programada)" : "") + ".";
+  else cotaTxt = "Consumo desta viagem: cerca de " + novo + " buscas/mês" +
+    (fases ? " agora (fase mensal ~" + Math.round(porExec(l0)) + "/mês, fase semanal ~" + Math.round(porExec(l0) * 4.3) + "/mês)" : "") +
+    ". Com as viagens ativas: " + total + " de " + COTA + ".";
+  if (multi && !fases && r.status === "ativa") cotaTxt += '<br><span class="aviso">Vários trechos na frequência padrão gastam ~' + Math.round(BUSCAS_MULTI * POR_COMB_MES) + ' buscas/mês. Considere a frequência por fases.</span>';
   let alerta = "";
   if (r.status === "ativa" && total > COTA) alerta = '<br><span class="erro">Ultrapassa a cota mensal. O robô pausaria as consultas antes do fim do mês. Reduza a flexibilidade ou encerre outra viagem.</span>';
   else if (r.status === "ativa" && total >= COTA * 0.8) alerta = '<br><span class="aviso">Passa de 80% da cota: você receberá o aviso de cota.</span>';
   p.innerHTML = "Nome: " + r.linhas.map(l => "<code>" + l.id + "</code>").join(", ") +
-    "<br>" + combos + (combos > 1 ? " combinações" : " combinação") + " de datas. Parada automática em " + brAno(r.parar) + "." +
-    "<br>Duração: " + limiteTxt(r.linhas[0].duracao_max) + "." +
+    "<br>" + (multi ? "Vários trechos: " + descMulti(l0) + "." : combos + (combos > 1 ? " combinações" : " combinação") + " de datas.") +
+    " Parada automática em " + brAno(r.parar) + " (com uma última pesquisa nesse dia)." +
+    "<br>Duração: " + limiteTxt(l0.duracao_max, multi) + "." +
+    "<br>Frequência: " + descFreq(l0) + "." +
     "<br>" + cotaTxt + alerta + (r.erros.length ? '<br><span class="erro">' + r.erros.join(" ") + '</span>' : "");
 }
 
@@ -384,6 +469,17 @@ function tabelaVoos(membros){
   return html + "</tbody></table></div>";
 }
 
+function esc(t){ return String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]); }
+function resumoMulti(v){
+  const a = dadosViagem(v);
+  if (!a.ultimo_resumo) return '<div class="quando">Ainda não há pesquisa registrada. A primeira sai na próxima terça programada.</div>';
+  const menor = historico.filter(h => h.id === v.id).map(h => +h.preco);
+  return '<div class="quando">Última pesquisa: ' + brAno(a.ultima_pesquisa) + (menor.length ? " | Menor visto: " + usd(Math.min(...menor)) : "") + "</div>" +
+    '<div class="resumoMulti">' + a.ultimo_resumo.split("\n").map(l => "<div>" + esc(l) + "</div>").join("") +
+    (a.ultimo_link ? '<div><a href="' + esc(a.ultimo_link) + '" target="_blank" rel="noopener">Abrir a mais barata no Google Flights ↗</a></div>' : "") +
+    '</div><div class="dica">As 3 melhores de cada modalidade chegam na mensagem do WhatsApp.</div>';
+}
+
 // ---------- lista ----------
 function desenharLista(){
   const abertas = viagens.filter(v => v.status !== "encerrada");
@@ -398,12 +494,15 @@ function desenharLista(){
     const precos = membros.map(m => dadosViagem(m).ultimo_preco).filter(Boolean);
     const melhor = precos.length ? Math.min(...precos) : null;
     const el = document.createElement("div"); el.className = "bilhete";
-    el.innerHTML = '<div class="corpo"><div class="rota">' + b.origem + " → " + b.destino + "<small>" + gid + "</small></div>" +
+    const multi = ehMulti(b);
+    el.innerHTML = '<div class="corpo"><div class="rota">' + b.origem + (multi ? " ⇄ " : " → ") + b.destino + "<small>" + gid + "</small></div>" +
       '<div class="meta">' + brAno(b.ida) + " a " + brAno(b.volta) + " | " + b.adultos + " adulto" + (+b.adultos > 1 ? "s" : "") +
-      (+b.criancas ? " + " + b.criancas + " criança" + (+b.criancas > 1 ? "s" : "") : "") + " | " + combos + " combinaç" + (combos > 1 ? "ões" : "ão") + "</div>" +
+      (+b.criancas ? " + " + b.criancas + " criança" + (+b.criancas > 1 ? "s" : "") : "") + " | " + (multi ? "vários trechos" : combos + " combinaç" + (combos > 1 ? "ões" : "ão")) + "</div>" +
       '<div class="precos">Melhor preço atual: <b>' + (melhor ? usd(melhor) : "aguardando consulta") + "</b> | Target: <b>" + (b.target ? usd(+b.target) : "a definir") + "</b></div>" +
-      '<div class="meta">Duração: ' + limiteTxt(b.duracao_max) + " | Parada em " + brAno(b.parar_em) + "</div>" +
-      '<button class="verVoos" type="button" aria-expanded="false">Ver voos encontrados (' + combos + ')</button>' +
+      '<div class="meta">Duração: ' + limiteTxt(b.duracao_max, multi) + " | Parada em " + brAno(b.parar_em) + "</div>" +
+      (multi ? '<div class="multiInfo">' + descMulti(b) + "</div>" : "") +
+      (ehFases(b) ? '<div class="meta">Frequência: ' + descFreq(b) + "</div>" : "") +
+      '<button class="verVoos" type="button" aria-expanded="false">' + (multi ? "Ver melhores opções" : "Ver voos encontrados (" + combos + ")") + '</button>' +
       '<div class="voos"></div>' +
       '<div class="editar"><input type="number" min="1" step="0.5" inputmode="decimal"><button class="principal">Salvar</button><button class="secundario">Cancelar</button></div>' +
       '<div class="editarDatas"><div><label>Nova ida</label><input type="date" data-c="ida"></div><div><label>Nova volta</label><input type="date" data-c="volta"></div>' +
@@ -431,9 +530,10 @@ function desenharLista(){
     };
     const bv = el.querySelector(".verVoos"), cx = el.querySelector(".voos");
     const mostrarVoos = abrir => {
-      if (abrir) { cx.innerHTML = tabelaVoos(membros); voosAbertos.add(gid); } else voosAbertos.delete(gid);
+      if (abrir) { cx.innerHTML = multi ? resumoMulti(b) : tabelaVoos(membros); voosAbertos.add(gid); } else voosAbertos.delete(gid);
       cx.classList.toggle("aberto", abrir); bv.setAttribute("aria-expanded", abrir);
-      bv.textContent = (abrir ? "Ocultar voos encontrados" : "Ver voos encontrados") + " (" + combos + ")";
+      bv.textContent = multi ? (abrir ? "Ocultar melhores opções" : "Ver melhores opções")
+                             : (abrir ? "Ocultar voos encontrados" : "Ver voos encontrados") + " (" + combos + ")";
     };
     bv.onclick = () => mostrarVoos(!cx.classList.contains("aberto"));
     if (voosAbertos.has(gid)) mostrarVoos(true);
@@ -515,8 +615,10 @@ function mostrar(conectado){ $("#secToken").hidden = conectado; $("#secNova").hi
 
 // ---------- eventos ----------
 $("#form").addEventListener("input", atualizarPrevia);
-prepararData($("#ida")); prepararData($("#volta"));
-$("#form").addEventListener("reset", () => setTimeout(() => { $("#origem").value = "XNA"; $("#ida")._sync(); $("#volta")._sync(); atualizarPrevia(); $("#msg").innerHTML = ""; }));
+$("#modo").addEventListener("change", () => { ajustarTipo(); atualizarPrevia(); });
+$("#freq").addEventListener("change", () => { ajustarTipo(); atualizarPrevia(); });
+prepararData($("#ida")); prepararData($("#volta")); prepararData($("#mensalAte"));
+$("#form").addEventListener("reset", () => setTimeout(() => { $("#origem").value = "XNA"; $("#conexao").value = "GRU"; $("#ida")._sync(); $("#volta")._sync(); $("#mensalAte")._sync(); ajustarTipo(); atualizarPrevia(); $("#msg").innerHTML = ""; }));
 $("#ida").addEventListener("change", () => { if ($("#ida").value) $("#volta").min = somaDias($("#ida").value, 1); });
 $("#form").addEventListener("submit", async ev => {
   ev.preventDefault();
@@ -525,7 +627,7 @@ $("#form").addEventListener("submit", async ev => {
     await carregar(true);
     const r = montarLinhas();
     if (r.erros.length) { toast(r.erros.join(" "), "erro"); return; }
-    const total = consumoMes(viagens) + (r.status === "ativa" ? r.linhas.reduce((s,l) => s + comb(l), 0) * POR_COMB_MES : 0);
+    const total = consumoMes(viagens) + (r.status === "ativa" ? r.linhas.reduce((s,l) => s + consumoViagem(l), 0) : 0);
     if (total > COTA && !confirm("Com esta viagem, o consumo previsto (" + total + "/mês) passa da cota de " + COTA + ". O robô pausaria as consultas antes do fim do mês. Salvar mesmo assim?")) return;
     await gravarCsv(viagens.concat(r.linhas), "nova viagem " + r.idBase);
     $("#form").reset();
