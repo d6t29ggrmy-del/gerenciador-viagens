@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<!-- Gerenciador de Viagens | v2.0 | 24/10/2026 18:11 | última alteração: pesquisa com vários trechos (bilhete único x trechos separados, conexão, folgas, mala 23 kg), frequência por fases, consumo de cota por tipo de pesquisa, CSV preserva todas as colunas, campos em #DDEBF7 | v1.6 | 20/10/2026 18:40 | linha da cota em amarelo | v1.5 | 20/10/2026 18:35 | última alteração: botões Atualizar/Desconectar no cabeçalho, selo na última linha à direita | v1.4 | 12/10/2026 11:20 | alteração anterior: lista de voos encontrados por combinação de datas no cartão -->
+<!-- Gerenciador de Viagens | v2.1 | 04/11/2026 08:06 | última alteração: campo "Trecho doméstico sai de" (coluna conexao_dom) para trocar de aeroporto por terra, ex.: chega em GRU e o doméstico sai de CGH; o nome da viagem ganha o aeroporto do doméstico | v2.0 | 24/10/2026 18:11 | última alteração: pesquisa com vários trechos (bilhete único x trechos separados, conexão, folgas, mala 23 kg), frequência por fases, consumo de cota por tipo de pesquisa, CSV preserva todas as colunas, campos em #DDEBF7 | v1.6 | 20/10/2026 18:40 | linha da cota em amarelo | v1.5 | 20/10/2026 18:35 | última alteração: botões Atualizar/Desconectar no cabeçalho, selo na última linha à direita | v1.4 | 12/10/2026 11:20 | alteração anterior: lista de voos encontrados por combinação de datas no cartão -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Gerenciador de Viagens</title>
@@ -121,7 +121,7 @@ header .lado .selo{align-self:flex-end;text-align:right}
   <div class="lado">
   <div class="topo-dir"><button class="btn-topo" id="btnAtualizar">Atualizar dados</button><button class="btn-topo" id="btnEsquecer">Desconectar este navegador</button></div>
   <div class="cota" id="cota"><div class="num">Cota do mês: carregando…</div><div class="barra"><i id="barraCota"></i></div></div>
-  <div class="selo" aria-label="Versão do Gerenciador">v2.0 · 24-out-26<br>6:11 pm</div>
+  <div class="selo" aria-label="Versão do Gerenciador">v2.1 · 04-nov-26<br>8:06 am</div>
   </div>
 </div></header>
 <main class="wrap">
@@ -172,7 +172,9 @@ header .lado .selo{align-self:flex-end;text-align:right}
             </select>
             <div class="dica" id="dicaModo">O robô compara as passagens de origem a destino.</div></div>
           <div class="soMulti" hidden><label for="conexao">Conexão para os trechos separados</label><input id="conexao" value="GRU" maxlength="3" autocapitalize="characters">
-            <div class="dica">Aeroporto onde um bilhete termina e o outro começa.</div></div>
+            <div class="dica">Aeroporto onde o bilhete internacional chega e sai.</div></div>
+          <div class="soMulti" hidden><label for="conexaoDom">Trecho doméstico sai de (se for outro aeroporto)</label><input id="conexaoDom" maxlength="3" placeholder="em branco = mesmo da conexão" autocapitalize="characters">
+            <div class="dica">Ex.: CGH. A troca entre os aeroportos é por terra; deixe folgas maiores.</div></div>
           <div class="soMulti" hidden><label for="folgaMin">Folga mínima entre bilhetes (h)</label><input id="folgaMin" type="number" min="1" step="0.5" value="3" inputmode="decimal"></div>
           <div class="soMulti" hidden><label for="folgaIdeal">Folga ideal até (h)</label><input id="folgaIdeal" type="number" min="1" step="0.5" value="5" inputmode="decimal">
             <div class="dica">Acima disso, a opção vem marcada no alerta.</div></div>
@@ -208,7 +210,7 @@ header .lado .selo{align-self:flex-end;text-align:right}
 const REPO = "d6t29ggrmy-del/bot-viagens", RAMO = "main";
 const COTA = 250, POR_COMB_MES = 43, PARADA_DIAS = 30;
 const CAMPOS = ["id","origem","destino","ida","volta","flex_ida","flex_volta","adultos","criancas","target","status","parar_em","duracao_max",
-                "modo","conexao","folga_min","folga_ideal","folga_max","mala","frequencia","mensal_ate"];
+                "modo","conexao","folga_min","folga_ideal","folga_max","mala","frequencia","mensal_ate","conexao_dom"];
 const BUSCAS_MULTI = 12;           // buscas por execução numa pesquisa com vários trechos (medido nos testes: 11–12)
 let cabCsv = [];                   // colunas do arquivo, para não perder nenhuma ao gravar
 const MESES = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
@@ -337,7 +339,7 @@ function montarLinhas(){
   const f = { pass: limpaNome($("#pass").value), origem: $("#origem").value.trim().toUpperCase(), destino: $("#destino").value.trim().toUpperCase(),
               ida: $("#ida").value, volta: $("#volta").value, flex: $("#flex").value, adultos: $("#adultos").value || "1",
               criancas: $("#criancas").value || "0", target: $("#target").value.trim(), dur: $("#duracao").value.trim(),
-              modo: $("#modo").value, conexao: $("#conexao").value.trim().toUpperCase(), fmin: $("#folgaMin").value.trim(),
+              modo: $("#modo").value, conexao: $("#conexao").value.trim().toUpperCase(), conDom: $("#conexaoDom").value.trim().toUpperCase(), fmin: $("#folgaMin").value.trim(),
               fideal: $("#folgaIdeal").value.trim(), fmax: $("#folgaMax").value.trim(), mala: $("#mala").value,
               freq: $("#freq").value, mensalAte: $("#mensalAte").value };
   const multi = f.modo === "multi", fases = f.freq === "fases";
@@ -351,17 +353,20 @@ function montarLinhas(){
   if (multi) {
     if (!/^[A-Z]{3}$/.test(f.conexao)) erros.push("A conexão deve ter 3 letras (ex.: GRU).");
     else if (f.conexao === f.origem || f.conexao === f.destino) erros.push("A conexão precisa ser diferente da origem e do destino.");
+    if (f.conDom && !/^[A-Z]{3}$/.test(f.conDom)) erros.push("O aeroporto do trecho doméstico deve ter 3 letras (ex.: CGH).");
+    else if (f.conDom && (f.conDom === f.origem || f.conDom === f.destino)) erros.push("O aeroporto do trecho doméstico precisa ser diferente da origem e do destino.");
     if (!(+f.fmin >= 1) || !(+f.fideal >= +f.fmin) || !(+f.fmax >= +f.fideal)) erros.push("As folgas devem seguir: mínima (pelo menos 1h) ≤ ideal ≤ máxima.");
   }
   if (fases && !f.mensalAte) erros.push("Informe até quando a consulta é mensal.");
   if (erros.length) return { erros };
-  const idBase = f.pass + "-" + f.destino + "-" + MESES[+f.ida.slice(5,7) - 1] + f.ida.slice(2,4);
+  const dom = multi && f.conDom && f.conDom !== f.conexao ? f.conDom : "";
+  const idBase = f.pass + "-" + f.destino + "-" + (dom ? dom + "-" : "") + MESES[+f.ida.slice(5,7) - 1] + f.ida.slice(2,4);
   const parar = somaDias(f.ida, -PARADA_DIAS);
   const status = f.target ? "ativa" : "aguardando_target";
   const base = { origem: f.origem, destino: f.destino, adultos: f.adultos, criancas: f.criancas, target: f.target, status, parar_em: parar, duracao_max: f.dur ? String(+f.dur) : "",
                  modo: multi ? "multi" : "", conexao: multi ? f.conexao : "", folga_min: multi ? String(+f.fmin) : "",
                  folga_ideal: multi ? String(+f.fideal) : "", folga_max: multi ? String(+f.fmax) : "", mala: multi ? f.mala : "",
-                 frequencia: fases ? "fases" : "", mensal_ate: fases ? f.mensalAte : "" };
+                 frequencia: fases ? "fases" : "", mensal_ate: fases ? f.mensalAte : "", conexao_dom: dom };
   if (fases && (f.mensalAte < hojeChicago() || f.mensalAte >= parar)) erros.push("A data “Mensal até” precisa ficar entre hoje e a parada automática (" + brAno(parar) + ").");
   let linhas;
   if (multi) {
@@ -383,7 +388,7 @@ function montarLinhas(){
   return { linhas, erros, avisos, idBase, parar, status };
 }
 
-const descMulti = v => "bilhete único " + v.origem + " ⇄ " + v.destino + " x trechos separados com troca em " + (v.conexao || "GRU") +
+const descMulti = v => "bilhete único " + v.origem + " ⇄ " + v.destino + " x trechos separados com troca em " + (v.conexao || "GRU") + (v.conexao_dom && v.conexao_dom !== v.conexao ? " → " + v.conexao_dom + " (por terra)" : "") +
   " | espera de " + hTxt(v.folga_min || 3) + " a " + hTxt(v.folga_ideal || 5) + " (aceita até " + hTxt(v.folga_max || 6) + ")" +
   " | " + (v.mala === "0" ? "sem mala" : "mala de 23 kg") + " | 3 melhores de cada";
 const descFreq = v => ehFases(v) ? "1ª terça do mês até " + brAno(v.mensal_ate) + ", depois toda terça (quarta = repescagem)" : "padrão do robô";
@@ -618,7 +623,7 @@ $("#form").addEventListener("input", atualizarPrevia);
 $("#modo").addEventListener("change", () => { ajustarTipo(); atualizarPrevia(); });
 $("#freq").addEventListener("change", () => { ajustarTipo(); atualizarPrevia(); });
 prepararData($("#ida")); prepararData($("#volta")); prepararData($("#mensalAte"));
-$("#form").addEventListener("reset", () => setTimeout(() => { $("#origem").value = "XNA"; $("#conexao").value = "GRU"; $("#ida")._sync(); $("#volta")._sync(); $("#mensalAte")._sync(); ajustarTipo(); atualizarPrevia(); $("#msg").innerHTML = ""; }));
+$("#form").addEventListener("reset", () => setTimeout(() => { $("#origem").value = "XNA"; $("#conexao").value = "GRU"; $("#conexaoDom").value = ""; $("#ida")._sync(); $("#volta")._sync(); $("#mensalAte")._sync(); ajustarTipo(); atualizarPrevia(); $("#msg").innerHTML = ""; }));
 $("#ida").addEventListener("change", () => { if ($("#ida").value) $("#volta").min = somaDias($("#ida").value, 1); });
 $("#form").addEventListener("submit", async ev => {
   ev.preventDefault();
